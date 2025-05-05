@@ -17,12 +17,11 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "../ui/button";
+import { toast } from "react-hot-toast";
 
 // Define and validate the structure of form data using Zod
 const formSchema = z.object({
   name: z.string().min(1), // Store name must be non-empty
-  description: z.string().min(1), // Description must be non-empty
-  image: z.string().min(1), // Image URL or path must be non-empty
 });
 
 // StoreModal component for creating a new store via a modal form
@@ -38,8 +37,6 @@ export const StoreModal = () => {
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
-      description: "",
-      image: "",
     },
   });
 
@@ -47,13 +44,14 @@ export const StoreModal = () => {
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       setLoading(true);
-      // POST request to API route for store creation
-      const response = await axios.post("/api/stores", values);
-      console.log(response.data); // Log response for debugging
-    } catch (error) {
-      console.log(error); // Ideally replace with toast/error handler
+      await axios.post("/api/stores", values);
+      toast.success("Store created successfully");
+      form.reset();
+      storeModal.onClose();
+    } catch {
+      toast.error("Something went wrong");
     } finally {
-      setLoading(false); // Reset loading state
+      setLoading(false);
     }
   };
 
@@ -67,7 +65,7 @@ export const StoreModal = () => {
       <div>
         <div className="space-y-4 py-2 pb-4">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               {/* Name input field */}
               <FormField
                 control={form.control}
@@ -78,7 +76,7 @@ export const StoreModal = () => {
                     <FormControl>
                       <Input
                         disabled={loading}
-                        placeholder="Ecommerce store"
+                        placeholder="Store name"
                         {...field}
                       />
                     </FormControl>
@@ -86,17 +84,19 @@ export const StoreModal = () => {
                   </FormItem>
                 )}
               />
+
               {/* Form action buttons */}
-              <div className="pt-6 space-x-2 items-center justify-end w-full">
+              <div className="pt-6 space-x-2 flex items-center justify-end w-full">
                 <Button
                   variant="outline"
                   onClick={storeModal.onClose}
                   disabled={loading}
+                  type="button"
                 >
                   Cancel
                 </Button>
                 <Button type="submit" disabled={loading}>
-                  Continue
+                  Create Store
                 </Button>
               </div>
             </form>
