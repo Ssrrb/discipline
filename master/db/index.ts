@@ -1,22 +1,24 @@
 import 'dotenv/config';
 import { drizzle } from 'drizzle-orm/neon-http';
 import { eq } from 'drizzle-orm';
-import { usersTable } from './schema';
+import { storeTable } from './schema';
   
 const db = drizzle(process.env.DATABASE_URL!);
 
 async function main() {
-  const user: typeof usersTable.$inferInsert = {
+  const store: typeof storeTable.$inferInsert = {
     name: 'John',
-    age: 30,
-    email: 'john@example.com',
+    userId: 'john@example.com',
+    createdAt: new Date(),
+    id: '1',
+    updatedAt: new Date(),
   };
 
-  await db.insert(usersTable).values(user);
-  console.log('New user created!')
+  await db.insert(storeTable).values(store);
+  console.log('New store created!')
 
-  const users = await db.select().from(usersTable);
-  console.log('Getting all users from the database: ', users)
+  const stores = await db.select().from(storeTable);
+  console.log('Getting all stores from the database: ', stores)
   /*
   const users: {
     id: number;
@@ -27,15 +29,17 @@ async function main() {
   */
 
   await db
-    .update(usersTable)
+    .update(storeTable)
     .set({
-      age: 31,
+      name: 'John Doe',
+      updatedAt: new Date(),
+      id: '1',
+      userId: 'john@example.com',
+      createdAt: new Date(),
     })
-    .where(eq(usersTable.email, user.email));
-  console.log('User info updated!')
+    .where(eq(storeTable.userId, store.userId));
+  console.log('Store info updated!')
 
-  await db.delete(usersTable).where(eq(usersTable.email, user.email));
-  console.log('User deleted!')
 }
 
 main();

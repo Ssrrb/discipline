@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import { UserButton, SignedIn } from "@clerk/nextjs";
 import "./globals.css";
+import { ModalProvider } from "@/providers/store-provider";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -28,7 +29,9 @@ export default function RootLayout({
               <UserButton />
             </SignedIn>
           </header>
+
           {children}
+          <ModalProvider />
         </body>
       </html>
     </ClerkProvider>

@@ -1,23 +1,17 @@
 "use client";
 
-import { Modal } from "@/components/ui/modal";
-import React from "react";
+import { useStoreModal } from "@/hooks/use-store-modal";
+import { useEffect } from "react";
 
-export default function Home() {
-  const [isOpen, setIsOpen] = React.useState(true);
+const SetupPage = () => {
+  const onOpen = useStoreModal((state) => state.onOpen);
+  const isOpen = useStoreModal((state) => state.isOpen);
+  useEffect(() => {
+    if (!isOpen) {
+      onOpen();
+    }
+  }, [isOpen, onOpen]);
+  return <div className="p-4">This is a Root page</div>;
+};
 
-  return (
-    <div className="flex items-center justify-center min-h-screen">
-      <Modal
-        title="Hello"
-        description="This is a centered modal"
-        isOpen={isOpen}
-        onClose={() => setIsOpen(false)}
-      >
-        <div className="text-center">
-          <p>This is the modal content</p>
-        </div>
-      </Modal>
-    </div>
-  );
-}
+export default SetupPage;
