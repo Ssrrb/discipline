@@ -32,7 +32,7 @@ export const StoreModal = () => {
   // Track submission state to manage UI feedback
   const [loading, setLoading] = useState(false);
 
-  // Setup form with schema validation and default field values
+  // Inicializa el formulario con validación Zod y valores por defecto
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -40,15 +40,16 @@ export const StoreModal = () => {
     },
   });
 
-  // Handle form submission asynchronously
+  // Maneja el envío del formulario. Crea una tienda y redirige a su página.
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       setLoading(true);
-      await axios.post("/api/stores", values);
-      toast.success("Store created successfully");
+      const response = await axios.post("/api/stores", values);
+      window.location.assign(`/${response.data.id}`); // Redirección al nuevo store
       form.reset();
       storeModal.onClose();
-    } catch {
+    } catch (error) {
+      console.error("Store creation failed", error);
       toast.error("Something went wrong");
     } finally {
       setLoading(false);

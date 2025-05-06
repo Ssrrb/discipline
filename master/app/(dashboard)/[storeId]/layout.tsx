@@ -22,10 +22,14 @@ export default async function DashboardLayout({
     .where(eq(storeTable.userId, userId)) // ✅ userId is now string
     .limit(1);
 
-  if (!store) redirect("/");
-  if (store.id !== params.storeId) {
-    redirect(`/${store.id}`);
+  if (!store) {
+    redirect("/");
   }
 
-  return <div className="flex flex-col">{children}</div>;
+  return (
+    <>
+      <div className="flex flex-col">This will be a navbar</div>
+      {children}
+    </>
+  );
 }
