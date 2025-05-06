@@ -3,13 +3,12 @@ import { auth } from "@clerk/nextjs/server";
 import { storeTable } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db"; // Use shared instance
+import Header from "@/components/header";
 
 export default async function DashboardLayout({
   children,
-  params,
 }: {
   children: React.ReactNode;
-  params: { storeId: string };
 }) {
   const { userId, redirectToSignIn } = await auth();
 
@@ -28,7 +27,7 @@ export default async function DashboardLayout({
 
   return (
     <>
-      <div className="flex flex-col">This will be a navbar</div>
+      <Header />
       {children}
     </>
   );
