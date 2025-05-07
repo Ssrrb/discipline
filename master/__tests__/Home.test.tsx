@@ -1,7 +1,7 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom"; // For the ".toBeInTheDocument()" matcher
-import Home from "./page";
+import Home from "@/app/(root)/page";
 
 describe("Home Component", () => {
   it("renders the main heading", () => {
