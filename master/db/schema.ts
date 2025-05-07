@@ -1,17 +1,11 @@
 import { neon } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-http';
-import { integer, pgTable, varchar } from "drizzle-orm/pg-core";
+import { pgTable, varchar, timestamp, uuid } from 'drizzle-orm/pg-core'; // Added uuid import
 
-const sql = neon(process.env.DATABASE_URL!);
-const db = drizzle(sql);
-
-export const usersTable = pgTable("users", {
-  id: integer().primaryKey().generatedAlwaysAsIdentity(),
-  name: varchar({ length: 255 }).notNull(),
-  age: integer().notNull(),
-  email: varchar({ length: 255 }).notNull().unique(),
+export const storeTable = pgTable("store", {
+  id: uuid("id").defaultRandom().primaryKey(), // Fixed uuid usage
+  name: varchar('name', { length: 255 }).notNull(),
+  userId: varchar('user_id', { length: 255 }).notNull(),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
 });
-
-
-
-
