@@ -1,6 +1,6 @@
 # Discipline - Your Personal Productivity Assistant
 
-A modern web application built with Next.js that helps you manage your tasks, stores, and productivity.
+A modern web admin dashboard application built with Next.js that helps you manage your tasks, stores, and productivity.
 
 ## 🚀 Tech Stack
 
@@ -9,7 +9,7 @@ A modern web application built with Next.js that helps you manage your tasks, st
 - **Authentication**: Clerk
 - **State Management**: Zustand
 - **Database**: Drizzle ORM with NeonDB
-- **Testing**: Jest, React Testing Library
+- **Testing**: Jest with React Testing Library
 - **Form Handling**: React Hook Form
 - **Payment Integration**: Bancard API
 
@@ -19,18 +19,16 @@ A modern web application built with Next.js that helps you manage your tasks, st
 master/
 ├── app/                    # Next.js App Router pages
 │   ├── (auth)/            # Authentication routes
-│   │   ├── login/
-│   │   └── signup/
 │   ├── (dashboard)/       # Dashboard routes
-│   │   └── [storeId]/
 │   └── (root)/            # Root layout and pages
-├── components/
-│   ├── ui/               # Reusable UI components
-├── api/                  # API routes
-├── db/                   # Database schema and migrations
-├── hooks/                # Custom React hooks
-├── lib/                  # Utility functions and shared logic
-├── providers/            # Context providers
+├── components/            # Reusable UI components
+│   └── ui/               # Shadcn UI components
+├── db/                    # Database schema and migrations
+├── drizzle/               # Drizzle ORM configuration
+├── hooks/                 # Custom React hooks
+├── lib/                   # Utility functions and shared logic
+├── middleware.ts          # Next.js middleware
+├── providers/             # Context providers
 └── public/               # Static assets
 ```
 
@@ -67,15 +65,18 @@ master/
 - Modern UI with Tailwind CSS and Shadcn UI
 - Responsive design
 - Real-time updates with Zustand
-- Secure payment processing with Bancard
+- Form validation with Zod
+- Toast notifications
+- API integration with Axios
+- TypeScript support throughout
 
 ## 🛠️ Development Tools
 
 - **Code Linting**: ESLint
-- **Code Formatting**: Prettier
 - **Type Checking**: TypeScript
 - **Testing**: Jest with React Testing Library
 - **Database Management**: Drizzle ORM
+- **Build Tool**: Next.js
 
 ## 📝 License
 

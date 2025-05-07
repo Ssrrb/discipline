@@ -15,17 +15,15 @@ export function MainNav() {
       <Link href="/">
         <Apple className="text-red-500" />
       </Link>
-
+      {/* TODO: Fix the API to bring the store name */}
       <NavigationMenu className="ml-8">
         <NavigationMenuList className="flex items-center gap-3 lg:gap-4">
-          {/* TODO: Retrieve the store name from the neon db using drizzle */}
           <NavigationMenuItem>
             <Link href="/project" className={navigationMenuTriggerStyle()}>
-              StoreName!
+              My Store
             </Link>
           </NavigationMenuItem>
 
-          {/* TODO: Settings link */}
           <NavigationMenuItem>
             <Link href="/about" className={navigationMenuTriggerStyle()}>
               Settings
