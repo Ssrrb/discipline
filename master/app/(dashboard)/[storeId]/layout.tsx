@@ -27,7 +27,7 @@ export default async function DashboardLayout({
 
   return (
     <>
-      <Header />
+      <Header store={store} />
       {children}
     </>
   );
