@@ -26,6 +26,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { AlertModal } from "@/components/modals/alert-modal";
 
 /**
  * Component Props Interface
@@ -88,6 +89,12 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ initialData }) => {
 
   return (
     <>
+      <AlertModal
+        isOpen={open}
+        onClose={() => setOpen(false)}
+        onConfirm={() => {}}
+        loading={loading}
+      />
       <div className="flex items-center justify-between">
         {/* Main heading section */}
         <Heading title="Settings" description="Manage store preferences" />
@@ -96,8 +103,9 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ initialData }) => {
         <Button
           variant="destructive"
           size="icon"
+          className="cursor-pointer hover:text-destructive"
           onClick={() => {
-            // TODO: Implement store deletion logic with confirmation dialog
+            setOpen(true);
           }}
         >
           <Trash className="h-4 w-4" />
