@@ -22,7 +22,7 @@ export default function Header({ store }: HeaderProps) {
         </div>
         {/* Mobile Navigation */}
         <div className="flex md:hidden flex-1">
-          <MobileNav />
+          <MobileNav storeId={store?.id} />
         </div>
         {/* User Button */}
         <Navbar />

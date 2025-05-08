@@ -8,9 +8,9 @@ import {
   NavigationMenuItem,
 } from "@/components/ui/navigation-menu";
 import { navigationMenuTriggerStyle } from "@/components/ui/navigation-menu";
+import { navigationConfig, DEFAULT_APP_ICON } from "@/components/navigation/navigation-config";
 
-
-type Props = {
+interface MainNavProps {
   store: {
     id: string;
     name: string;
@@ -18,27 +18,29 @@ type Props = {
     createdAt: Date | null;
     updatedAt: Date | null;
   } | null;
-};
-export function MainNav({ store }: Props) {
+}
+
+export function MainNav({ store }: MainNavProps) {
+  const items = navigationConfig.main(store?.id);
+
   return (
     <div className="hidden md:flex items-center">
-      <Link href="/">
+      <Link href="/" className="flex items-center gap-2">
         <Apple className="text-red-500" />
+        <span className="sr-only">Discipline</span>
       </Link>
-      {/* TODO:  bring the store name from the db */}
       <NavigationMenu className="ml-8">
         <NavigationMenuList className="flex items-center gap-3 lg:gap-4">
-          <NavigationMenuItem>
-            <Link href="/project" className={navigationMenuTriggerStyle()}>
-              {store?.name || "My Store"}
-            </Link>
-          </NavigationMenuItem>
-
-          <NavigationMenuItem>
-            <Link href="/about" className={navigationMenuTriggerStyle()}>
-              Settings
-            </Link>
-          </NavigationMenuItem>
+          {items.map((item) => (
+            <NavigationMenuItem key={item.href}>
+              <Link
+                href={item.href}
+                className={navigationMenuTriggerStyle()}
+              >
+                {item.label}
+              </Link>
+            </NavigationMenuItem>
+          ))}
         </NavigationMenuList>
       </NavigationMenu>
     </div>
