@@ -8,7 +8,10 @@ import {
   NavigationMenuItem,
 } from "@/components/ui/navigation-menu";
 import { navigationMenuTriggerStyle } from "@/components/ui/navigation-menu";
-import { navigationConfig, DEFAULT_APP_ICON } from "@/components/navigation/navigation-config";
+import {
+  navigationConfig,
+  DEFAULT_APP_ICON,
+} from "@/components/navigation/navigation-config";
 
 interface MainNavProps {
   store: {
@@ -21,7 +24,7 @@ interface MainNavProps {
 }
 
 export function MainNav({ store }: MainNavProps) {
-  const items = navigationConfig.main(store?.id);
+  const items = navigationConfig.main(store?.id, store?.name);
 
   return (
     <div className="hidden md:flex items-center">
@@ -33,10 +36,7 @@ export function MainNav({ store }: MainNavProps) {
         <NavigationMenuList className="flex items-center gap-3 lg:gap-4">
           {items.map((item) => (
             <NavigationMenuItem key={item.href}>
-              <Link
-                href={item.href}
-                className={navigationMenuTriggerStyle()}
-              >
+              <Link href={item.href} className={navigationMenuTriggerStyle()}>
                 {item.label}
               </Link>
             </NavigationMenuItem>

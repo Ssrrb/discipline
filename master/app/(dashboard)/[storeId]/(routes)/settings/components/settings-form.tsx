@@ -3,6 +3,9 @@
 import * as z from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { toast } from "react-hot-toast";
+import axios from "axios";
+import { useParams, useRouter } from "next/navigation";
 
 import { storeTable } from "@/db/schema";
 import { InferSelectModel } from "drizzle-orm";
@@ -12,6 +15,7 @@ import { Trash } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { useState } from "react";
 import { eq } from "drizzle-orm";
+
 import {
   Form,
   FormField,
@@ -52,6 +56,8 @@ type SettingsFormValues = z.infer<typeof formSchema>;
  */
 
 export const SettingsForm: React.FC<SettingsFormProps> = ({ initialData }) => {
+  const params = useParams();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -61,7 +67,23 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ initialData }) => {
   });
 
   const onSubmit = async (values: SettingsFormValues) => {
-    console.log(values);
+    try {
+      setLoading(true);
+      const response = await axios.patch(
+        `/api/stores/${initialData.id}`,
+        values
+      );
+      toast.success("Store updated successfully");
+      router.refresh();
+    } catch (error: any) {
+      if (error.response?.data?.error) {
+        toast.error(error.response.data.error);
+      } else {
+        toast.error("Something went wrong.");
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

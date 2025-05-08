@@ -5,15 +5,15 @@ export type NavigationItem = {
 };
 
 export const navigationConfig = {
-  main: (storeId: string | null | undefined) => [{
-    label: storeId ? "Dashboard" : "Home",
+  main: (storeId: string | null | undefined, storeName: string | null | undefined) => [{
+    label: storeName || (storeId ? "Dashboard" : "Home"),
     href: storeId ? `/${storeId}` : "/",
   }, {
     label: "Settings",
     href: storeId ? `/${storeId}/settings` : "/settings",
   }],
-  mobile: (storeId: string | null | undefined) => [{
-    label: storeId ? "Dashboard" : "Home",
+  mobile: (storeId: string | null | undefined, storeName: string | null | undefined) => [{
+    label: storeName || (storeId ? "Dashboard" : "Home"),
     href: storeId ? `/${storeId}` : "/",
   }, {
     label: "Settings",
