@@ -9,8 +9,12 @@ A modern web admin dashboard application built with Next.js that helps you manag
 - **Authentication**: Clerk
 - **State Management**: Zustand
 - **Database**: Drizzle ORM with NeonDB
-- **Testing**: Jest with React Testing Library
 - **Form Handling**: React Hook Form
+- **Toast Notifications**: React Hot Toast
+- **WebSocket**: ws
+- **Validation**: Zod
+- **Query Management**: TanStack Query
+- **API**: Axios
 - **Payment Integration**: Bancard API
 
 ## 🛠️ Project Structure
@@ -54,6 +58,10 @@ master/
 4. Set up your database:
    ```bash
    npx drizzle-kit push:pg
+   ```
+5. Start the development server:
+   ```bash
+   npm run dev
    ```
 
 
