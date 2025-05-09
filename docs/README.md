@@ -11,3 +11,38 @@ The idea is to have a WhatsApp-Based AI-Assistant Platform with a full-featured 
 - Documentation and Code Quality: All written aspects will be excellent
 - Agile is the way. We'll Deliver software in small, manageable increments to gather feedback and make adjustments.
 
+## Pages
+[✔] StoreName
+[✔] Products
+[✔] Orders
+[✔] Analytics
+[✔] Settings (includes API access)
+
+1- StoreName name page should be the onboarding where users put their whatsapp number to interact with the Bot, it should also have a bot status indicator, and have a welcome message to the user, should also have an immediate action to support if bot is not working.
+2- Products page should show allow the admins to add the products to their database and show the actual products in a grid.
+3- Orders page is an integration to their e-commerce platform if they decide to make one, else it just should show the API access to create it.
+4- Analytics page should show the three separated dashboards 📈 Sales | 📦 Inventory | 🤖 Bot and graphs relevant to each one.(probably bot integrate later)
+5- Settings page should Manage store preferences, and database information
+
+## Features
+- Whatsapp Integration
+- Database Management
+- Dashboard
+- E-commerce Integration
+- AI Assistant
+- User Management
+- Product Management
+- Order Management
+- Inventory Management
+- Analytics
+- Settings
+- Mobile App
+- Web App
+- Database Management
+- Dashboard
+- E-commerce Integration
+- Inventory Management
+- Order Management
+- Product Management
+- User Management
+
