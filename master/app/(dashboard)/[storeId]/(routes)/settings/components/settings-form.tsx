@@ -86,13 +86,41 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ initialData }) => {
       setLoading(false);
     }
   };
+  /**
+   * Handles store deletion with proper error handling and navigation
+   * 
+   * @remarks
+   * - Redirects to root page after successful deletion
+   * - Shows appropriate error message if deletion fails
+   * - Closes the delete confirmation modal in all cases
+   */
+  const onDelete = async () => {
+    try {
+      // Delete store using API endpoint
+      await axios.delete(`/api/stores/${params.storeId}`);
+      
+      // Show success message and redirect to root page
+      toast.success("Store deleted");
+      router.push("/");
+    } catch (error: any) {
+      // Handle specific error cases
+      if (error.response?.status === 400) {
+        toast.error("Make sure you removed all products first.");
+      } else {
+        toast.error("Failed to delete store. Please try again.");
+      }
+    } finally {
+      // Always close the modal regardless of success/error
+      setOpen(false);
+    }
+  };
 
   return (
     <>
       <AlertModal
         isOpen={open}
         onClose={() => setOpen(false)}
-        onConfirm={() => {}}
+        onConfirm={onDelete}
         loading={loading}
       />
       <div className="flex items-center justify-between">
