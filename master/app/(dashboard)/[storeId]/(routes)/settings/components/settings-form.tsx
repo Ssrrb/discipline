@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Trash } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { useState } from "react";
-import { eq } from "drizzle-orm";
+import { useOrigin } from "@/hooks/use-origin";
 
 import {
   Form,
@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { AlertModal } from "@/components/modals/alert-modal";
+import { ApiAlert } from "@/components/ui/api-alert";
 
 /**
  * Component Props Interface
@@ -59,6 +60,7 @@ type SettingsFormValues = z.infer<typeof formSchema>;
 export const SettingsForm: React.FC<SettingsFormProps> = ({ initialData }) => {
   const params = useParams();
   const router = useRouter();
+  const origin = useOrigin();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -88,7 +90,7 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ initialData }) => {
   };
   /**
    * Handles store deletion with proper error handling and navigation
-   * 
+   *
    * @remarks
    * - Redirects to root page after successful deletion
    * - Shows appropriate error message if deletion fails
@@ -98,7 +100,7 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ initialData }) => {
     try {
       // Delete store using API endpoint
       await axios.delete(`/api/stores/${params.storeId}`);
-      
+
       // Show success message and redirect to root page
       toast.success("Store deleted");
       router.push("/");
@@ -171,6 +173,12 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ initialData }) => {
           </Button>
         </form>
       </Form>
+      <Separator />
+      <ApiAlert
+        title="NEXT_PUBLIC_API_URL"
+        description={`${origin}/api/${params.storeId}`}
+        variant="public"
+      />
     </>
   );
 };

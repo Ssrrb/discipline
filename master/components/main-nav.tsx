@@ -27,12 +27,18 @@ export function MainNav({ store }: MainNavProps) {
   const items = navigationConfig.main(store?.id, store?.name);
 
   return (
-    <div className="hidden md:flex items-center">
-      <Link href="/" className="flex items-center gap-2">
-        <Apple className="text-red-500" />
-        <span className="sr-only">Discipline</span>
+    <div className="flex items-center w-full justify-center lg:justify-start lg:items-start">
+      {/* Logo always centered up to md, then flush left on lg+ */}
+      <Link
+        href="/"
+        className="flex items-center gap-2 mx-auto lg:mx-0 lg:mr-6"
+      >
+        <Apple className="text-red-500" size={24} />
+        <span className="font-bold text-lg">Discipline</span>
       </Link>
-      <NavigationMenu className="ml-8">
+
+      {/* On small screens this will still render, but you’ll probably hide it behind your mobile-sheet */}
+      <NavigationMenu>
         <NavigationMenuList className="flex items-center gap-3 lg:gap-4">
           {items.map((item) => (
             <NavigationMenuItem key={item.href}>
