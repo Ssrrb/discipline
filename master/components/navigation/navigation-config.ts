@@ -11,7 +11,11 @@ export const navigationConfig = {
   }, {
     label: "Settings",
     href: storeId ? `/${storeId}/settings` : "/settings",
+  }, {
+    label: "Categories",
+    href: storeId ? `/${storeId}/categories` : "/categories",
   }],
+
   mobile: (storeId: string | null | undefined, storeName: string | null | undefined) => [{
     label: storeName || (storeId ? "Dashboard" : "Home"),
     href: storeId ? `/${storeId}` : "/",

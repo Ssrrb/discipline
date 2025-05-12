@@ -2,7 +2,6 @@
 import { pgTable, varchar, timestamp, uuid, integer, decimal } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
-
 export const storeTable = pgTable('store', {
   id: uuid('id').defaultRandom().primaryKey(),
   name: varchar('name', { length: 255 }).notNull(),
@@ -18,18 +17,19 @@ export const productTable = pgTable('product', {
   description: varchar('description', { length: 255 }).notNull(),
   price: decimal('price').notNull(),
   stock: integer('stock').notNull(),
-  category: varchar('category', { length: 255 }).notNull(),
+  categoryId: uuid('category_id').references(() => categoryTable.id),
   storeId: uuid('store_id').references(() => storeTable.id),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
 });
 
-// category table
 export const categoryTable = pgTable('category', {
   id: uuid('id').defaultRandom().primaryKey(),
   name: varchar('name', { length: 100 }).notNull().unique(),
   description: varchar('description', { length: 255 }),
+  storeId: uuid('store_id').references(() => storeTable.id),
   createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
 });
 
 export const imageTable = pgTable('image', {
@@ -43,6 +43,15 @@ export const imageTable = pgTable('image', {
 
 export const storeRelations = relations(storeTable, ({ many }) => ({
   products: many(productTable),
+  categories: many(categoryTable),
+}));
+
+export const categoryRelations = relations(categoryTable, ({ one, many }) => ({
+  store: one(storeTable, {
+    fields: [categoryTable.storeId],
+    references: [storeTable.id],
+  }),
+  products: many(productTable),
 }));
 
 export const productRelations = relations(productTable, ({ one, many }) => ({
@@ -51,8 +60,8 @@ export const productRelations = relations(productTable, ({ one, many }) => ({
     references: [storeTable.id],
   }),
   category: one(categoryTable, {
-    fields: [productTable.category],
-    references: [categoryTable.name],
+    fields: [productTable.categoryId],
+    references: [categoryTable.id],
   }),
   images: many(imageTable),
 }));

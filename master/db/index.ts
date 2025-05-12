@@ -3,15 +3,12 @@ import { drizzle } from 'drizzle-orm/neon-http';
 import { eq } from 'drizzle-orm';
 import { storeTable } from './schema';
   
-const db = drizzle(process.env.DATABASE_URL!);
+export const db = drizzle(process.env.DATABASE_URL!);
 
 async function main() {
   const store: typeof storeTable.$inferInsert = {
     name: 'John',
     userId: 'john@example.com',
-    createdAt: new Date(),
-    id: '1',
-    updatedAt: new Date(),
   };
 
   await db.insert(storeTable).values(store);
@@ -32,10 +29,7 @@ async function main() {
     .update(storeTable)
     .set({
       name: 'John Doe',
-      updatedAt: new Date(),
-      id: '1',
       userId: 'john@example.com',
-      createdAt: new Date(),
     })
     .where(eq(storeTable.userId, store.userId));
   console.log('Store info updated!')
