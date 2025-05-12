@@ -7,7 +7,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { CategoryColumn } from "./columns";
+import { CategoryColumn } from "./columns.tsx";
 import { Button } from "@/components/ui/button";
 import { Copy, Edit, MoreHorizontal, Trash } from "lucide-react";
 import { toast } from "react-hot-toast";
@@ -39,9 +39,7 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
       router.refresh();
       toast.success("Category deleted successfully.");
     } catch {
-      toast.error(
-        "Make sure you removed all products using this category first."
-      );
+      toast.error("Error deleting");
     } finally {
       setLoading(false);
       setOpen(false);
