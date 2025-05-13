@@ -8,6 +8,13 @@
       "when": 1746535308861,
       "tag": "0000_steep_microchip",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1747091156214,
+      "tag": "0001_easy_pepper_potts",
+      "breakpoints": true
     }
   ]
 }

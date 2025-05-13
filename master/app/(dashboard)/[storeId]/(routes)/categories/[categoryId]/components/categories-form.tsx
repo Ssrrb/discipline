@@ -7,14 +7,13 @@ import { toast } from "react-hot-toast";
 import axios from "axios";
 import { useParams, useRouter } from "next/navigation";
 
-import { categoryTable, storeTable } from "@/db/schema";
+import { categoryTable } from "@/db/schema";
 import { InferSelectModel } from "drizzle-orm";
 import { Heading } from "@/components/ui/heading";
 import { Button } from "@/components/ui/button";
 import { Trash } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { useState } from "react";
-import { useOrigin } from "@/hooks/use-origin";
 
 import {
   Form,
@@ -27,57 +26,52 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { AlertModal } from "@/components/modals/alert-modal";
-import { ApiAlert } from "@/components/ui/api-alert";
+import { Textarea } from "@/components/ui/textarea";
 
-/**
- * Component Props Interface
- * @property initialData - The initial data for the form, inferred from the store table schema
- * @remarks Uses Drizzle's InferSelectModel to automatically generate TypeScript types from the database schema
- */
-interface CategoryFormProps {
-  initialData: InferSelectModel<typeof categoryTable>;
-}
-
-/**
- * Zod schema for form validation
- * @property name - Store name must be at least 3 characters long
- */
 const formSchema = z.object({
-  name: z.string().min(3, "Store name must be at least 3 characters long"),
+  name: z.string().min(3, "Category name must be at least 3 characters long"),
+  description: z.string().optional(),
 });
 
 type CategoryFormValues = z.infer<typeof formSchema>;
 
-/**
- * SettingsForm Component
- * @component
- * @param {SettingsFormProps} props - Component props
- * @param {InferSelectModel<typeof storeTable>} props.initialData - Initial form data from store table
- * @description This component provides a form interface for managing store settings
- * @remarks Uses React Hook Form with Zod validation for robust form handling
- */
+interface CategoryFormProps {
+  initialData: Partial<InferSelectModel<typeof categoryTable>> & { id: string };
+}
 
 export const CategoryForm: React.FC<CategoryFormProps> = ({ initialData }) => {
   const params = useParams();
   const router = useRouter();
-  const origin = useOrigin();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  const title = initialData.id === 'new' ? 'Create category' : 'Edit category';
+  const description = initialData.id === 'new' ? 'Add a new category' : 'Edit category details';
+  const toastMessage = initialData.id === 'new' ? 'Category created.' : 'Category updated.';
+  const action = initialData.id === 'new' ? 'Create' : 'Save changes';
+
   const form = useForm<CategoryFormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: initialData,
+    defaultValues: {
+      name: initialData.name || '',
+      description: initialData.description || '',
+    }
   });
 
   const onSubmit = async (values: CategoryFormValues) => {
     try {
       setLoading(true);
-      const response = await axios.patch(
-        `/api/categories/${initialData.id}`,
-        values
-      );
-      toast.success("Category updated successfully");
+      if (initialData.id === 'new') {
+        await axios.post(`/api/categories`, {
+          ...values,
+          storeId: params.storeId
+        });
+      } else {
+        await axios.patch(`/api/categories/${initialData.id}`, values);
+      }
       router.refresh();
+      router.push(`/${params.storeId}/categories`);
+      toast.success(toastMessage);
     } catch (error: any) {
       if (error.response?.data?.error) {
         toast.error(error.response.data.error);
@@ -88,31 +82,18 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({ initialData }) => {
       setLoading(false);
     }
   };
-  /**
-   * Handles store deletion with proper error handling and navigation
-   *
-   * @remarks
-   * - Redirects to root page after successful deletion
-   * - Shows appropriate error message if deletion fails
-   * - Closes the delete confirmation modal in all cases
-   */
+
   const onDelete = async () => {
     try {
-      // Delete store using API endpoint
+      setLoading(true);
       await axios.delete(`/api/categories/${params.categoryId}`);
-
-      // Show success message and redirect to root page
-      toast.success("Category deleted");
-      router.push("/");
+      router.refresh();
+      router.push(`/${params.storeId}/categories`);
+      toast.success("Category deleted.");
     } catch (error: any) {
-      // Handle specific error cases
-      if (error.response?.status === 400) {
-        toast.error("Make sure you removed all products first.");
-      } else {
-        toast.error("Failed to delete store. Please try again.");
-      }
+      toast.error("Make sure you removed all products using this category first.");
     } finally {
-      // Always close the modal regardless of success/error
+      setLoading(false);
       setOpen(false);
     }
   };
@@ -126,23 +107,18 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({ initialData }) => {
         loading={loading}
       />
       <div className="flex items-center justify-between">
-        {/* Main heading section */}
-        <Heading title="Category" description="Manage category preferences" />
-
-        {/* Delete store button - TODO: Implement delete functionality */}
-        <Button
-          variant="destructive"
-          size="icon"
-          className="cursor-pointer hover:text-destructive"
-          onClick={() => {
-            setOpen(true);
-          }}
-        >
-          <Trash className="h-4 w-4" />
-        </Button>
+        <Heading title={title} description={description} />
+        {initialData.id !== 'new' && (
+          <Button
+            disabled={loading}
+            variant="destructive"
+            size="icon"
+            onClick={() => setOpen(true)}
+          >
+            <Trash className="h-4 w-4" />
+          </Button>
+        )}
       </div>
-
-      {/* Visual separator between header and form content */}
       <Separator />
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
@@ -156,29 +132,37 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({ initialData }) => {
                   <FormControl>
                     <Input
                       disabled={loading}
-                      placeholder="Store name"
+                      placeholder="Category name"
                       {...field}
                     />
                   </FormControl>
-                  <FormDescription>
-                    This is your store name, and it&apos;s used by the system.
-                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Description</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      disabled={loading}
+                      placeholder="Category description"
+                      {...field}
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
           </div>
           <Button disabled={loading} className="ml-auto" type="submit">
-            Save changes
+            {action}
           </Button>
         </form>
       </Form>
-      <Separator />
-      <ApiAlert
-        title="NEXT_PUBLIC_API_URL"
-        description={`${origin}/api/${params.storeId}`}
-        variant="public"
-      />
     </>
   );
 };

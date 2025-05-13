@@ -1,27 +1,24 @@
-import { format } from "date-fns";
+import { CategoryClient } from "./components/client";
 import { db } from "@/lib/db";
 import { categoryTable } from "@/db/schema";
-import { CategoryClient } from "./components/client";
-import { CategoryColumn } from "./components/columns";
-import { eq, desc } from "drizzle-orm";
+import { format } from "date-fns";
+import { eq } from "drizzle-orm";
 
-const CategoriesPage = async ({
-  params,
+export default async function CategoriesPage({
+  params
 }: {
-  params: Promise<{ storeId: string }>;
-}) => {
-  const { storeId } = await params;
+  params: { storeId: string }
+}) {
   const categories = await db
     .select()
     .from(categoryTable)
-    .where(eq(categoryTable.storeId, storeId))
-    .orderBy(desc(categoryTable.createdAt));
+    .where(eq(categoryTable.storeId, params.storeId));
 
-  const formattedCategories: CategoryColumn[] = categories.map((item) => ({
-    id: item.id,
-    name: item.name,
-    description: item.description || "",
-    createdAt: item.createdAt ? format(item.createdAt, "MMMM do, yyyy") : "",
+  const formattedCategories = categories.map((category) => ({
+    id: category.id,
+    name: category.name,
+    description: category.description || '',
+    createdAt: category.createdAt ? format(category.createdAt, 'MMMM dd, yyyy') : 'N/A'
   }));
 
   return (
@@ -31,6 +28,4 @@ const CategoriesPage = async ({
       </div>
     </div>
   );
-};
-
-export default CategoriesPage;
+}
