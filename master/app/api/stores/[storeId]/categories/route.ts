@@ -64,9 +64,10 @@ export async function POST(
   }
 }
 
+// PATCH /api/stores/[storeId]/categories/[categoryId]
 export async function PATCH(
   req: Request,
-  { params }: { params: { categoryId: string } }
+  { params }: { params: { storeId: string; categoryId: string } }
 ) {
   try {
     const { userId } = await auth();
@@ -82,37 +83,57 @@ export async function PATCH(
       );
     }
 
-    const { categoryId } = params;
-    if (!categoryId) {
-      return NextResponse.json({ error: "Missing categoryId" }, { status: 400 });
+    const { storeId, categoryId } = params;
+    if (!storeId || !categoryId) {
+      return NextResponse.json(
+        { error: "Missing storeId or categoryId" },
+        { status: 400 }
+      );
     }
 
+    // Verify the store exists and belongs to the user
+    const [store] = await db
+      .select()
+      .from(storeTable)
+      .where(
+        and(
+          eq(storeTable.id, storeId),
+          eq(storeTable.userId, userId)
+        )
+      );
+
+    if (!store) {
+      return NextResponse.json({ error: "Store not found" }, { status: 404 });
+    }
+
+    // Verify the category exists and belongs to the store
     const [category] = await db
       .select()
       .from(categoryTable)
-      .where(eq(categoryTable.id, String(categoryId)));
+      .where(
+        and(
+          eq(categoryTable.id, categoryId),
+          eq(categoryTable.storeId, storeId)
+        )
+      );
 
     if (!category) {
       return NextResponse.json({ error: "Category not found" }, { status: 404 });
     }
 
-    const [store] = await db
-      .select()
-      .from(storeTable)
-      .where(eq(storeTable.id, String(category.storeId)));
-
-    if (!store || store.userId !== userId) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
-    if (!store || store.userId !== userId) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
+    // Update the category
     await db
       .update(categoryTable)
-      .set({ name })
-      .where(eq(categoryTable.id, String(categoryId)));
+      .set({ 
+        name,
+        updatedAt: new Date()
+      })
+      .where(
+        and(
+          eq(categoryTable.id, categoryId),
+          eq(categoryTable.storeId, storeId)
+        )
+      );
 
     return NextResponse.json({ success: true });
   } catch (error) {
@@ -124,9 +145,10 @@ export async function PATCH(
   }
 }
 
+// DELETE /api/stores/[storeId]/categories/[categoryId]
 export async function DELETE(
   req: Request,
-  { params }: { params: { categoryId: string } }
+  { params }: { params: { storeId: string; categoryId: string } }
 ) {
   try {
     const { userId } = await auth();
@@ -134,34 +156,53 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
     }
 
-    const { categoryId } = params;
-    if (!categoryId) {
-      return NextResponse.json({ error: "Missing categoryId" }, { status: 400 });
+    const { storeId, categoryId } = params;
+    if (!storeId || !categoryId) {
+      return NextResponse.json(
+        { error: "Missing storeId or categoryId" },
+        { status: 400 }
+      );
     }
 
+    // Verify the store exists and belongs to the user
+    const [store] = await db
+      .select()
+      .from(storeTable)
+      .where(
+        and(
+          eq(storeTable.id, storeId),
+          eq(storeTable.userId, userId)
+        )
+      );
+
+    if (!store) {
+      return NextResponse.json({ error: "Store not found" }, { status: 404 });
+    }
+
+    // Verify the category exists and belongs to the store
     const [category] = await db
       .select()
       .from(categoryTable)
-      .where(eq(categoryTable.id, String(categoryId)));
+      .where(
+        and(
+          eq(categoryTable.id, categoryId),
+          eq(categoryTable.storeId, storeId)
+        )
+      );
 
     if (!category) {
       return NextResponse.json({ error: "Category not found" }, { status: 404 });
     }
 
-    const [store] = await db
-      .select()
-      .from(storeTable)
-      .where(eq(storeTable.id, String(category.storeId)));
-
-    if (!store || store.userId !== userId) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
-    if (!store || store.userId !== userId) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
-    await db.delete(categoryTable).where(eq(categoryTable.id, String(categoryId)));
+    // Delete the category
+    await db
+      .delete(categoryTable)
+      .where(
+        and(
+          eq(categoryTable.id, categoryId),
+          eq(categoryTable.storeId, storeId)
+        )
+      );
 
     return NextResponse.json({ success: true });
   } catch (error) {
