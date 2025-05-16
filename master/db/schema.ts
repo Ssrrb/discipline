@@ -26,7 +26,6 @@ export const productTable = pgTable('product', {
 export const categoryTable = pgTable('category', {
   id: uuid('id').defaultRandom().primaryKey(),
   name: varchar('name', { length: 100 }).notNull().unique(),
-  description: varchar('description', { length: 255 }),
   storeId: uuid('store_id').references(() => storeTable.id),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),

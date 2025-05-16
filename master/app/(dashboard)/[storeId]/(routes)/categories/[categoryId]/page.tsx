@@ -1,35 +1,87 @@
-import { format } from "date-fns";
+import { notFound, redirect } from "next/navigation";
 import { db } from "@/lib/db";
-import { categoryTable } from "@/db/schema";
-import { CategoryClient } from "../components/client";
-import { CategoryColumn } from "../components/columns";
-import { eq, desc } from "drizzle-orm";
+import { categoryTable, storeTable } from "@/db/schema";
+import { eq, and } from "drizzle-orm";
+import { CategoryForm } from "./components/categories-form";
 
-const CategoriesPage = async ({
-  params,
-}: {
-  params: Promise<{ storeId: string }>;
-}) => {
-  const { storeId } = await params;
-  const categories = await db
-    .select()
-    .from(categoryTable)
-    .where(eq(categoryTable.storeId, storeId))
-    .orderBy(desc(categoryTable.createdAt));
+interface PageProps {
+  params: {
+    storeId: string;
+    categoryId: string;
+  };
+  searchParams?: { [key: string]: string | string[] | undefined };
+}
 
-  const formattedCategories: CategoryColumn[] = categories.map((item) => ({
-    id: item.id,
-    name: item.name,
-    createdAt: item.createdAt ? format(item.createdAt, "MMMM do, yyyy") : "",
-  }));
+/**
+ * Category Page Component
+ * @description Server component that handles both creating a new category and editing an existing one
+ * @param {PageProps} props - Component props
+ * @returns {Promise<JSX.Element>} The category form page
+ */
+export default async function CategoryPage({ params }: PageProps) {
+  const { storeId, categoryId } = await params;
 
-  return (
-    <div className="flex-col">
-      <div className="flex-1 p-8 pt-6 space-y-4">
-        <CategoryClient data={formattedCategories} />
+  // Handle new category case
+  if (categoryId === "new") {
+    // Verify the store exists
+    const store = await db.query.storeTable.findFirst({
+      where: eq(storeTable.id, storeId),
+    });
+
+    if (!store) {
+      notFound();
+    }
+
+    return (
+      <div className="flex-col">
+        <div className="flex-1 p-8 pt-6 space-y-4">
+          <CategoryForm storeId={storeId} />
+        </div>
       </div>
-    </div>
-  );
-};
+    );
+  }
 
-export default CategoriesPage;
+  // Handle edit category case
+  try {
+    // Validate UUID format before querying the database
+    if (
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+        params.categoryId
+      )
+    ) {
+      notFound();
+    }
+    // Fetch category data
+    const category = await db.query.categoryTable.findFirst({
+      where: and(
+        eq(categoryTable.id, params.categoryId),
+        eq(categoryTable.storeId, params.storeId)
+      ),
+    });
+
+    // Return 404 if category doesn't exist
+    if (!category) {
+      notFound();
+    }
+
+    return (
+      <div className="flex-col">
+        <div className="flex-1 p-8 pt-6 space-y-4">
+          <CategoryForm initialData={category} storeId={storeId} />
+        </div>
+      </div>
+    );
+  } catch (error) {
+    console.error("Error in CategoryPage:", error);
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="text-center space-y-4">
+          <h2 className="text-2xl font-bold">Something went wrong</h2>
+          <p className="text-muted-foreground">
+            We couldn't load the category. Please try again later.
+          </p>
+        </div>
+      </div>
+    );
+  }
+}
