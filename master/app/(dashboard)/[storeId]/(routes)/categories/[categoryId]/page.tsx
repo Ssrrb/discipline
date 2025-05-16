@@ -19,6 +19,7 @@ interface PageProps {
  * @returns {Promise<JSX.Element>} The category form page
  */
 export default async function CategoryPage({ params }: PageProps) {
+  // Await and destructure params
   const { storeId, categoryId } = await params;
 
   // Handle new category case
@@ -46,7 +47,7 @@ export default async function CategoryPage({ params }: PageProps) {
     // Validate UUID format before querying the database
     if (
       !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
-        params.categoryId
+        categoryId
       )
     ) {
       notFound();
@@ -54,8 +55,8 @@ export default async function CategoryPage({ params }: PageProps) {
     // Fetch category data
     const category = await db.query.categoryTable.findFirst({
       where: and(
-        eq(categoryTable.id, params.categoryId),
-        eq(categoryTable.storeId, params.storeId)
+        eq(categoryTable.id, categoryId),
+        eq(categoryTable.storeId, storeId)
       ),
     });
 

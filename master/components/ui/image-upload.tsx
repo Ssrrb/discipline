@@ -2,10 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Trash } from "lucide-react";
+import { Trash, ImagePlus } from "lucide-react";
 import Image from "next/image";
 import { CldUploadWidget } from "next-cloudinary";
-import { ImagePlus } from "lucide-react";
 
 interface ImageUploadProps {
   disabled?: boolean;
@@ -22,94 +21,73 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
 }) => {
   const [isMounted, setIsMounted] = useState(false);
 
-  // Initialize component and set mounted state
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
-  // Handle successful image upload from Cloudinary
   const onUpload = (result: any) => {
-    console.log("Image upload successful:", result.info);
-
-    // Get the secure URL from Cloudinary response
     const newUrl = result.info.secure_url;
-
-    // Create new array with existing URLs plus new one
-    const updatedUrls = [...value, newUrl];
-
-    // Update parent component with new URLs
-    onChange(updatedUrls);
+    onChange([...value, newUrl]);
   };
 
-  // Handle upload button click
   const handleUpload = (
     e: React.MouseEvent<HTMLButtonElement>,
     open: () => void
   ) => {
     e.preventDefault();
-    console.log("Opening Cloudinary upload widget");
     open();
   };
 
-  // Handle image removal
   const handleRemove = (urlToRemove: string) => {
-    console.log("Removing image:", urlToRemove);
-
-    // Filter out the URL to remove
     const updatedUrls = value.filter((url) => url !== urlToRemove);
-
-    // Update parent component with new URLs
     onRemove(updatedUrls);
   };
 
-  // Return null while component is mounting
-  if (!isMounted) {
-    return null;
-  }
+  if (!isMounted) return null;
 
   return (
-    <div>
-      <div className="mb-4 flex items-center gap-4">
-        {value.map((url: string) => (
-          <div
-            key={url}
-            className="relative h-24 w-24 overflow-hidden rounded-md"
-          >
-            <div className="z-10 absolute top-2 right-2">
-              <Button
+    <div className="space-y-4">
+      {/* Uploaded images gallery */}
+      {value.length > 0 ? (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {value.map((url) => (
+            <div
+              key={url}
+              className="relative group h-32 w-full rounded-lg overflow-hidden border border-gray-200"
+            >
+              <Image src={url} alt="Uploaded" fill className="object-cover" />
+              <button
                 type="button"
                 disabled={disabled}
-                variant="destructive"
-                size="icon"
                 onClick={() => handleRemove(url)}
+                className="absolute top-2 right-2 bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition"
               >
                 <Trash className="h-4 w-4" />
-              </Button>
+              </button>
             </div>
-            <Image src={url} alt="Image" fill className="object-cover" />
-          </div>
-        ))}
-        <CldUploadWidget
-          onSuccess={onUpload}
-          uploadPreset="image-uploader-ssrb"
-        >
-          {({ open }) => (
-            <div className="flex items-center gap-2">
-              <Button
-                type="button"
-                className="cursor-pointer"
-                disabled={disabled}
-                variant="secondary"
-                onClick={(e) => handleUpload(e, open)}
-              >
-                {" "}
-                Upload an image{" "}
-              </Button>
-              <ImagePlus className="h-4 w-4" />
-            </div>
-          )}
-        </CldUploadWidget>
-      </div>
+          ))}
+        </div>
+      ) : (
+        <p className="text-sm text-muted-foreground italic">
+          No images uploaded yet.
+        </p>
+      )}
+
+      {/* Upload button area */}
+      <CldUploadWidget onSuccess={onUpload} uploadPreset="image-uploader-ssrb">
+        {({ open }) => (
+          <Button
+            type="button"
+            onClick={(e) => handleUpload(e, open)}
+            disabled={disabled}
+            className="flex items-center gap-2"
+            variant="outline"
+          >
+            <ImagePlus className="h-4 w-4" />
+            Upload Image
+          </Button>
+        )}
+      </CldUploadWidget>
     </div>
   );
 };

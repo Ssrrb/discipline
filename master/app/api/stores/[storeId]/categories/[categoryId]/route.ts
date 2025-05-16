@@ -64,11 +64,12 @@ export async function POST(
   }
 }
 
-// PATCH /api/stores/[storeId]/categories/[categoryId]
+// PATCH /api/stores/[storeId]/categories/
 export async function PATCH(
   req: Request,
   { params }: { params: { storeId: string; categoryId: string } }
 ) {
+  console.log('PATCH /api/stores/[storeId]/categories/[categoryId]', { params });
   try {
     const { userId } = await auth();
     if (!userId) {

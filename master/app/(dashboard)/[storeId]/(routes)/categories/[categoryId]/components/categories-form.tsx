@@ -96,7 +96,7 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({
 
       if (isEdit) {
         await axios.patch(
-          `/api/stores/${storeId}/categories/${initialData.id}`,
+          `/api/stores/${storeId}/categories/${initialData?.id}`,
           values
         );
       } else {
@@ -129,7 +129,7 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({
 
     try {
       setLoading(true);
-      await axios.delete(`/api/${storeId}/categories/${initialData.id}`);
+      await axios.delete(`/api/stores/${storeId}/categories/${initialData.id}`);
       router.refresh();
       router.push(`/${storeId}/categories`);
       toast.success("Category deleted.");

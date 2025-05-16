@@ -1,4 +1,4 @@
-"use Client";
+"use client";
 
 import {
   DropdownMenu,
@@ -35,7 +35,7 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
   const onDelete = async () => {
     try {
       setLoading(true);
-      await axios.delete(`/api/${params.storeId}/categories/${data.id}`);
+      await axios.delete(`/api/stores/${params.storeId}/categories/${data.id}`);
       router.refresh();
       toast.success("Category deleted successfully.");
     } catch {
