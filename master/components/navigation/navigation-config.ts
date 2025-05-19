@@ -14,7 +14,12 @@ export const navigationConfig = {
   }, {
     label: "Categories",
     href: storeId ? `/${storeId}/categories` : "/categories",
-  }],
+  },
+  {
+    label: "Products",
+    href: storeId ? `/${storeId}/products` : "/products",
+  }
+],
 
   mobile: (storeId: string | null | undefined, storeName: string | null | undefined) => [{
     label: storeName || (storeId ? "Dashboard" : "Home"),
@@ -22,7 +27,17 @@ export const navigationConfig = {
   }, {
     label: "Settings",
     href: storeId ? `/${storeId}/settings` : "/settings",
-  }],
+  },
+  {
+    label: "Categories",
+    href: storeId ? `/${storeId}/categories` : "/categories",
+  },
+  {
+    label: "Products",
+    href: storeId ? `/${storeId}/products` : "/products",
+  }
+],
+
 };
 
 export const DEFAULT_APP_ICON = "Apple" as const;

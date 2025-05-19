@@ -9,7 +9,7 @@ import { CldUploadWidget } from "next-cloudinary";
 interface ImageUploadProps {
   disabled?: boolean;
   onChange: (value: string[]) => void;
-  onRemove: (value: string[]) => void;
+  onRemove: (value: string) => void;
   value: string[];
 }
 
@@ -39,8 +39,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
   };
 
   const handleRemove = (urlToRemove: string) => {
-    const updatedUrls = value.filter((url) => url !== urlToRemove);
-    onRemove(updatedUrls);
+    onRemove(urlToRemove);
   };
 
   if (!isMounted) return null;

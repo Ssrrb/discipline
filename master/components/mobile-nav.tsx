@@ -1,5 +1,5 @@
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { AlignJustify, Apple } from "lucide-react";
+import { AlignJustify } from "lucide-react";
 import Link from "next/link";
 import { navigationConfig } from "@/components/navigation/navigation-config";
 import { DialogTitle } from "@radix-ui/react-dialog";

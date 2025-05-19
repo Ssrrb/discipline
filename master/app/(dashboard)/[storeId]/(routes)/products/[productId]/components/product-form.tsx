@@ -302,28 +302,25 @@ export const ProductForm: React.FC<ProductFormProps> = ({
               name="categoryId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Product</FormLabel>
+                  <FormLabel>Category</FormLabel>
                   <Select
                     disabled={loading}
-                    onValueChange={field.onChange}
-                    value={field.value || ""}
-                    defaultValue={field.value || ""}
+                    onValueChange={(value) => {
+                      // Convert "no-category" to null for the form
+                      field.onChange(value === "no-category" ? null : value);
+                    }}
+                    value={field.value || "no-category"}
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue
-                          defaultValue={field.value || ""}
-                          placeholder="Select a Category"
-                        />
+                        <SelectValue placeholder="Select a Category" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {/* Placeholder should use value="" and be disabled */}
-                      <SelectItem value="" disabled>
-                        Select a Category
-                      </SelectItem>
+                      {/* Use "no-category" as a non-empty placeholder value */}
+                      <SelectItem value="no-category">No Category</SelectItem>
                       {categories.map((category) => (
-                        <SelectItem key={category.id} value={category.id!}>
+                        <SelectItem key={category.id} value={category.id || ""}>
                           {category.name}
                         </SelectItem>
                       ))}
