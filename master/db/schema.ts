@@ -17,7 +17,7 @@ export const productTable = pgTable('product', {
   description: varchar('description', { length: 255 }).notNull(),
   price: decimal('price').notNull(),
   stock: integer('stock').notNull(),
-  categoryId: uuid('category_id').references(() => categoryTable.id),
+  categoryId: uuid('category_id').references(() => categoryTable.id, { onDelete: 'set null' }),
   storeId: uuid('store_id').references(() => storeTable.id),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),

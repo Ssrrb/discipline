@@ -35,11 +35,13 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
   const onDelete = async () => {
     try {
       setLoading(true);
-      await axios.delete(`/api/${params.storeId}/products/${data.id}`);
+      await axios.delete(`/api/stores/${params.storeId}/products/${data.id}`);
       router.refresh();
       toast.success("Product deleted successfully.");
     } catch (error) {
-      toast.error("Something went wrong. Make sure you removed all categories using this product first.");
+      toast.error(
+        "Something went wrong. Make sure you removed all categories using this product first."
+      );
     } finally {
       setLoading(false);
       setOpen(false);
@@ -69,7 +71,7 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() =>
-              router.push(`/${params.storeId}/categories/${data.id}`)
+              router.push(`/${params.storeId}/products/${data.id}`)
             }
           >
             <Edit className="w-4 h-4 mr-2" />

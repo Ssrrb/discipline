@@ -1,6 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-import { categoryTable, storeTable } from "@/db/schema";
+import { categoryTable, storeTable, productTable } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { db } from "@/lib/db";
 
@@ -159,58 +159,43 @@ export async function DELETE(
 
     const { storeId, categoryId } = params;
     if (!storeId || !categoryId) {
-      return NextResponse.json(
-        { error: "Missing storeId or categoryId" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Missing storeId or categoryId" }, { status: 400 });
     }
 
-    // Verify the store exists and belongs to the user
+    // Check store ownership
     const [store] = await db
       .select()
       .from(storeTable)
-      .where(
-        and(
-          eq(storeTable.id, storeId),
-          eq(storeTable.userId, userId)
-        )
-      );
+      .where(and(eq(storeTable.id, storeId), eq(storeTable.userId, userId)));
 
     if (!store) {
       return NextResponse.json({ error: "Store not found" }, { status: 404 });
     }
 
-    // Verify the category exists and belongs to the store
+    // Check category existence
     const [category] = await db
       .select()
       .from(categoryTable)
-      .where(
-        and(
-          eq(categoryTable.id, categoryId),
-          eq(categoryTable.storeId, storeId)
-        )
-      );
+      .where(and(eq(categoryTable.id, categoryId), eq(categoryTable.storeId, storeId)));
 
     if (!category) {
       return NextResponse.json({ error: "Category not found" }, { status: 404 });
     }
 
-    // Delete the category
+    // Step 1: Unset category from products
+    await db
+      .update(productTable)
+      .set({ categoryId: null }) // or set to a default category if you have one
+      .where(and(eq(productTable.categoryId, categoryId), eq(productTable.storeId, storeId)));
+
+    // Step 2: Delete the category
     await db
       .delete(categoryTable)
-      .where(
-        and(
-          eq(categoryTable.id, categoryId),
-          eq(categoryTable.storeId, storeId)
-        )
-      );
+      .where(and(eq(categoryTable.id, categoryId), eq(categoryTable.storeId, storeId)));
 
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("[CATEGORIES_DELETE]", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

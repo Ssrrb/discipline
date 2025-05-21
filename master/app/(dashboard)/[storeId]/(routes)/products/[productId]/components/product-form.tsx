@@ -106,37 +106,33 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         },
   });
 
-  const onSubmit = async (values: ProductFormValues) => {
-    // Fix: Convert empty string categoryId to null before validation/submission
-    const fixedValues = {
-      ...values,
-      categoryId: values.categoryId === "" ? null : values.categoryId,
-    };
+  const onSubmit = async (data: ProductFormValues) => {
     try {
       setLoading(true);
-      const dataToSend = {
-        ...fixedValues,
-        price: String(fixedValues.price),
+      const payload = {
+        ...data,
+        price: data.price.toString(), // Ensure price is a string
+        stock: Number(data.stock), // Ensure stock is a number
+        categoryId: data.categoryId || null, // Ensure categoryId is either a string or null
       };
 
-      if (isEdit && initialData?.id) {
+      if (initialData) {
+        // Update existing product
         await axios.patch(
           `/api/stores/${storeId}/products/${initialData.id}`,
-          dataToSend
+          payload
         );
       } else {
-        await axios.post(`/api/stores/${storeId}/products`, dataToSend);
+        // Create new product
+        await axios.post(`/api/stores/${storeId}/products`, payload);
       }
 
       router.refresh();
       router.push(`/${storeId}/products`);
       toast.success(toastMessage);
-    } catch (error: any) {
-      if (error.response?.data?.error) {
-        toast.error(error.response.data.error);
-      } else {
-        toast.error("Something went wrong.");
-      }
+    } catch (error) {
+      console.error("Error:", error);
+      toast.error("Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }

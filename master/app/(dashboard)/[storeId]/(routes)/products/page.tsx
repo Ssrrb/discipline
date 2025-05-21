@@ -8,10 +8,10 @@ import { eq, desc, and } from "drizzle-orm";
 const ProductsPage = async ({
   params,
 }: {
-  params: { storeId: string };
+  params: Promise<{ storeId: string }>;
 }) => {
-  const { storeId } = params;
-  
+  const { storeId } = await params;
+
   // Fetch products with their categories
   const products = await db
     .select({
@@ -24,10 +24,7 @@ const ProductsPage = async ({
       createdAt: productTable.createdAt,
     })
     .from(productTable)
-    .leftJoin(
-      categoryTable,
-      eq(productTable.categoryId, categoryTable.id)
-    )
+    .leftJoin(categoryTable, eq(productTable.categoryId, categoryTable.id))
     .where(eq(productTable.storeId, storeId))
     .orderBy(desc(productTable.createdAt));
 
@@ -36,7 +33,7 @@ const ProductsPage = async ({
     id: item.id,
     name: item.name,
     description: item.description || "",
-    price: `$${parseFloat(item.price || '0').toFixed(2)}`,
+    price: `$${parseFloat(item.price || "0").toFixed(2)}`,
     stock: item.stock || 0,
     category: item.category || "No category",
     createdAt: item.createdAt ? format(item.createdAt, "MMMM do, yyyy") : "",
