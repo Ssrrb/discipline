@@ -181,158 +181,204 @@ export const ProductForm: React.FC<ProductFormProps> = ({
           <Button
             disabled={loading}
             variant="destructive"
-            size="icon"
+            size="sm"
             onClick={() => setOpen(true)}
+            className="flex items-center gap-2"
           >
             <Trash className="h-4 w-4" />
+            Delete Product
           </Button>
         )}
       </div>
-
-      <Separator />
+      <Separator className="my-4" />
       <Form {...form}>
-        <form
-          onSubmit={form.handleSubmit(onSubmit)}
-          className="space-y-8 w-full"
-        >
-          <FormField
-            control={form.control}
-            name="images"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Images</FormLabel>
-                <FormControl>
-                  <ImageUpload
-                    value={field.value.map((image) => image.url)}
-                    disabled={loading}
-                    onChange={(urls) =>
-                      field.onChange(urls.map((url) => ({ url })))
-                    }
-                    onRemove={(urlToRemove: string) =>
-                      field.onChange(
-                        field.value.filter(
-                          (currentImage) => currentImage.url !== urlToRemove
-                        )
-                      )
-                    }
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+          <div className="p-6 bg-white rounded-lg border shadow-sm">
+            <h2 className="text-lg font-medium mb-4">Product Images</h2>
             <FormField
               control={form.control}
-              name="name"
+              name="images"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Name</FormLabel>
                   <FormControl>
-                    <Input
+                    <ImageUpload
+                      value={field.value.map((image) => image.url)}
                       disabled={loading}
-                      placeholder="Product name"
-                      {...field}
+                      onChange={(url) =>
+                        field.onChange([...field.value, { url }])
+                      }
+                      onRemove={(url) =>
+                        field.onChange([
+                          ...field.value.filter(
+                            (current) => current.url !== url
+                          ),
+                        ])
+                      }
                     />
                   </FormControl>
-                  <FormDescription>This is your product name.</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description</FormLabel>
-                  <FormControl>
-                    <Input
-                      disabled={loading}
-                      placeholder="Product description"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="price"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Price</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      disabled={loading}
-                      placeholder="9.99"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="stock"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Stock</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      disabled={loading}
-                      placeholder="100"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="categoryId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Category</FormLabel>
-                  <Select
-                    disabled={loading}
-                    onValueChange={(value) => {
-                      // Convert "no-category" to null for the form
-                      field.onChange(value === "no-category" ? null : value);
-                    }}
-                    value={field.value || "no-category"}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a Category" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {/* Use "no-category" as a non-empty placeholder value */}
-                      <SelectItem value="no-category">No Category</SelectItem>
-                      {categories.map((category) => (
-                        <SelectItem key={category.id} value={category.id || ""}>
-                          {category.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
             />
           </div>
-          <Button disabled={loading} className="ml-auto" type="submit">
-            {action}
-          </Button>
+
+          <div className="p-6 bg-white rounded-lg border shadow-sm space-y-6">
+            <h2 className="text-lg font-medium">Product Information</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Product Name</FormLabel>
+                    <FormControl>
+                      <Input
+                        disabled={loading}
+                        placeholder="Enter product name"
+                        {...field}
+                        className="w-full"
+                      />
+                    </FormControl>
+                    <FormDescription className="text-xs">
+                      The name that will be displayed to customers.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="categoryId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Category</FormLabel>
+                    <Select
+                      disabled={loading}
+                      onValueChange={(value) => {
+                        field.onChange(value === "no-category" ? null : value);
+                      }}
+                      value={field.value || "no-category"}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select a category" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="no-category">No Category</SelectItem>
+                        {categories.map((category) => (
+                          <SelectItem
+                            key={category.id}
+                            value={category.id || ""}
+                          >
+                            {category.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormDescription className="text-xs">
+                      Group your product for better organization.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem className="col-span-full">
+                    <FormLabel>Description</FormLabel>
+                    <FormControl>
+                      <Input
+                        disabled={loading}
+                        placeholder="Enter product description"
+                        {...field}
+                        className="w-full"
+                      />
+                    </FormControl>
+                    <FormDescription className="text-xs">
+                      Provide detailed information about your product.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
+
+          <div className="p-6 bg-white rounded-lg border shadow-sm space-y-6">
+            <h2 className="text-lg font-medium">Inventory & Pricing</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <FormField
+                control={form.control}
+                name="price"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Price (PYG)</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <span className="absolute left-3 top-2 text-gray-500">
+                          ₲
+                        </span>
+                        <Input
+                          type="number"
+                          disabled={loading}
+                          placeholder="1000"
+                          {...field}
+                          className="pl-7"
+                          step="1000"
+                        />
+                      </div>
+                    </FormControl>
+                    <FormDescription className="text-xs">
+                      Set your product's price in Guaraníes (PYG).
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="stock"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Stock Quantity</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        disabled={loading}
+                        placeholder="Enter available quantity"
+                        {...field}
+                        min="0"
+                        className="w-full"
+                      />
+                    </FormControl>
+                    <FormDescription className="text-xs">
+                      Number of items available for purchase.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-4">
+            <Button
+              disabled={loading}
+              variant="outline"
+              onClick={() => router.push(`/${storeId}/products`)}
+            >
+              Cancel
+            </Button>
+            <Button disabled={loading} type="submit" className="px-8">
+              {action}
+            </Button>
+          </div>
         </form>
       </Form>
-      <Separator />
+      <Separator className="my-4" />
     </>
   );
 };
