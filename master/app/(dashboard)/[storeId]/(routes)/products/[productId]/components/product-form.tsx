@@ -65,7 +65,7 @@ const formSchema = z.object({
     .min(0, "Stock must be a non-negative integer."),
   categoryId: z.string().uuid("Invalid category ID.").nullable(),
   images: z
-    .object({ url: z.string() })
+    .object({ url: z.string().min(1, "Image URL cannot be empty.") })
     .array()
     .min(1, "At least one image is required."),
 });
@@ -107,6 +107,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   });
 
   const onSubmit = async (data: ProductFormValues) => {
+    console.log("ProductForm onSubmit: Data received from form:", data); // <-- ADD THIS
     try {
       setLoading(true);
       const payload = {
@@ -204,15 +205,13 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                     <ImageUpload
                       value={field.value.map((image) => image.url)}
                       disabled={loading}
-                      onChange={(url) =>
-                        field.onChange([...field.value, { url }])
+                      onChange={(urls) =>
+                        field.onChange(urls.map((url) => ({ url })))
                       }
                       onRemove={(url) =>
-                        field.onChange([
-                          ...field.value.filter(
-                            (current) => current.url !== url
-                          ),
-                        ])
+                        field.onChange(
+                          field.value.filter((current) => current.url !== url)
+                        )
                       }
                     />
                   </FormControl>

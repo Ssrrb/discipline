@@ -27,7 +27,10 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
 
   const onUpload = (result: any) => {
     const newUrl = result.info.secure_url;
-    onChange([...value, newUrl]);
+    console.log("ImageUpload: Cloudinary URL received:", newUrl); // <-- ADD THIS
+    const updatedUrls = [...value, newUrl];
+    console.log("ImageUpload: Calling onChange with:", updatedUrls); // <-- ADD THIS
+    onChange(updatedUrls);
   };
 
   const handleUpload = (
@@ -49,22 +52,24 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
       {/* Uploaded images gallery */}
       {value.length > 0 ? (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {value.map((url) => (
-            <div
-              key={url}
-              className="relative group h-32 w-full rounded-lg overflow-hidden border border-gray-200"
-            >
-              <Image src={url} alt="Uploaded" fill className="object-cover" />
-              <button
-                type="button"
-                disabled={disabled}
-                onClick={() => handleRemove(url)}
-                className="absolute top-2 right-2 bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition"
+          {value
+            .filter((url) => typeof url === "string" && url.trim() !== "")
+            .map((url) => (
+              <div
+                key={url}
+                className="relative group h-32 w-full rounded-lg overflow-hidden border border-gray-200"
               >
-                <Trash className="h-4 w-4" />
-              </button>
-            </div>
-          ))}
+                <Image src={url} alt="Uploaded" fill className="object-cover" />
+                <button
+                  type="button"
+                  disabled={disabled}
+                  onClick={() => handleRemove(url)}
+                  className="absolute top-2 right-2 bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition"
+                >
+                  <Trash className="h-4 w-4" />
+                </button>
+              </div>
+            ))}
         </div>
       ) : (
         <p className="text-sm text-muted-foreground italic">

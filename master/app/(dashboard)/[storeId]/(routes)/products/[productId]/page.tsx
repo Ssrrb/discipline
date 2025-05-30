@@ -11,8 +11,14 @@ interface ProductPageProps {
   };
 }
 
-const ProductPage = async ({ params }: ProductPageProps) => {
-  // In this context, params is always an object, not a Promise
+const ProductPage = async ({ params: paramsProp }: ProductPageProps) => {
+  // Renamed to paramsProp to avoid confusion
+  console.log("ProductPage received paramsProp:", paramsProp);
+
+  // Await the params if it's a promise
+  const params = await paramsProp; // <-- KEY CHANGE: Await the params
+
+  // Now, params should be the resolved object
   const { storeId, productId } = params;
 
   // Fetch all categories for the dropdown
@@ -25,14 +31,21 @@ const ProductPage = async ({ params }: ProductPageProps) => {
     return (
       <div className="flex-col">
         <div className="flex-1 p-8 pt-6 space-y-4">
-          <ProductForm initialData={undefined} categories={categories} storeId={storeId} />
+          <ProductForm
+            initialData={undefined}
+            categories={categories}
+            storeId={storeId}
+          />
         </div>
       </div>
     );
   }
 
   // Type guard for UUID (simple regex, can be improved)
-  const isUUID = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(productId);
+  const isUUID =
+    /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(
+      productId
+    );
   if (!isUUID) {
     return (
       <div className="flex-col">
@@ -68,7 +81,11 @@ const ProductPage = async ({ params }: ProductPageProps) => {
   return (
     <div className="flex-col">
       <div className="flex-1 p-8 pt-6 space-y-4">
-        <ProductForm initialData={product} categories={categories} storeId={storeId} />
+        <ProductForm
+          initialData={product}
+          categories={categories}
+          storeId={storeId}
+        />
       </div>
     </div>
   );
