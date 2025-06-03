@@ -17,15 +17,10 @@ const DashboardPage = () => {
   return (
     <div>
       This will be a dashboard!
-      <ImageUpload
-        value={imageUrls}
-        onChange={handleImageChange}
-        onRemove={handleImageRemove}
-        disabled={loading}
-      />
+      {/*TODO: Add Visual Graphs for the store, such as products sold, revenue, etc.*/}
+      {/*TODO: Add a Sales page for the webapp where users can load their sales in a csv format and upload it to the database*/}
     </div>
   );
 };
-//TODO: Add a component for the user to add its phone number and an API to send it to the database
 
 export default DashboardPage;

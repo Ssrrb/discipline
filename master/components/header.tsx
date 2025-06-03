@@ -29,7 +29,7 @@ export default function Header({ store }: HeaderProps) {
           <div className="md:hidden flex items-center">
             <Link href="/" className="flex items-center gap-2">
               <Apple className="text-red-500" size={24} />
-              <span className="font-bold text-lg">Discipline</span>
+              <span className="font-bold text-lg">IA Ceferina</span>
             </Link>
           </div>
 

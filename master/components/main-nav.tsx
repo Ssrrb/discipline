@@ -34,7 +34,7 @@ export function MainNav({ store }: MainNavProps) {
         className="flex items-center gap-2 mx-auto lg:mx-0 lg:mr-6"
       >
         <Apple className="text-red-500" size={24} />
-        <span className="font-bold text-lg">Discipline</span>
+        <span className="font-bold text-lg">IA Ceferina</span>
       </Link>
 
       {/* On small screens this will still render, but you’ll probably hide it behind your mobile-sheet */}

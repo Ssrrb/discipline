@@ -28,6 +28,7 @@ const SettingsPage: React.FC<SettingsPageProps> = async ({ params }) => {
     <div className="flex-col">
       <div className="flex-1 space-y-4 p-8 pt-6">
         <SettingsForm initialData={storeData} />
+        {/*TODO: Add a component for the user to add its phone number and an API to send it to the database*/}
       </div>
     </div>
   );
