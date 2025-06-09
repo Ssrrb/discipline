@@ -18,7 +18,12 @@ export const navigationConfig = {
   {
     label: "Products",
     href: storeId ? `/${storeId}/products` : "/products",
+  },
+  {
+    label: "Sales",
+    href: storeId ? `/${storeId}/sales` : "/sales",
   }
+    
 ],
 
   mobile: (storeId: string | null | undefined, storeName: string | null | undefined) => [{
@@ -35,6 +40,10 @@ export const navigationConfig = {
   {
     label: "Products",
     href: storeId ? `/${storeId}/products` : "/products",
+  },
+  {
+    label: "Sales",
+    href: storeId ? `/${storeId}/sales` : "/sales",
   }
 ],
 
