@@ -9,6 +9,41 @@ import { eq, and } from "drizzle-orm";
 
 // Define the Zod schema for a single sale record
 const saleRecordSchema = z.object({
+  // New fields based on logs - mostly optional strings for now
+  annulment_date: z.preprocess((arg) => (arg instanceof Date ? arg.toISOString().split('T')[0] : (typeof arg === 'string' && arg.trim() !== '' ? arg : null)), z.string().optional().nullable()),
+  authorization_code: z.string().optional().nullable(),
+  issuer_name: z.string().optional().nullable(),
+  card_number_masked: z.string().optional().nullable(),
+  customer_gender: z.string().optional().nullable(),
+  customer_birth_date: z.preprocess((arg) => (arg instanceof Date ? arg.toISOString().split('T')[0] : (typeof arg === 'string' && arg.trim() !== '' ? arg : null)), z.string().optional().nullable()),
+  transaction_origin: z.string().optional().nullable(),
+  transaction_type: z.string().optional().nullable(),
+  processor_name: z.string().optional().nullable(),
+  device_type: z.string().optional().nullable(),
+  iata_code: z.string().optional().nullable(),
+  card_affinity: z.string().optional().nullable(),
+  statement_number: z.string().optional().nullable(),
+  vat_on_commission: z.preprocess(
+    (val) => (val === "" || val === null || val === undefined ? null : String(val).replace(',', '.')),
+    z.string().optional().nullable()
+    .refine(s => s === null || s === undefined || (typeof s === 'string' && !isNaN(parseFloat(s))), { message: "IVA s/Comision debe ser un número válido" })
+  ),
+  deposit_account_code: z.string().optional().nullable(),
+  bank_account_number: z.string().optional().nullable(),
+  merchant_commission_rate: z.preprocess(
+    (val) => (val === "" || val === null || val === undefined ? null : String(val).replace(',', '.')),
+    z.string().optional().nullable()
+    .refine(s => s === null || s === undefined || (typeof s === 'string' && !isNaN(parseFloat(s))), { message: "Porcentaje de comision al comercio debe ser un número válido" })
+  ),
+  promotion_date: z.preprocess((arg) => (arg instanceof Date ? arg.toISOString().split('T')[0] : (typeof arg === 'string' && arg.trim() !== '' ? arg : null)), z.string().optional().nullable()),
+  cash_register_id: z.string().optional().nullable(),
+  transaction_service: z.string().optional().nullable(),
+  service_description: z.string().optional().nullable(),
+  service_code: z.string().optional().nullable(),
+  service_code_description: z.string().optional().nullable(),
+  additional_data: z.string().optional().nullable(),
+  pre_authorization_slip: z.string().optional().nullable(),
+  // Existing fields below
   sale_date: z.preprocess((arg) => {
     if (!arg) return null;
     if (arg instanceof Date) return arg;
@@ -99,6 +134,39 @@ const saleRecordSchema = z.object({
 type SaleRecord = z.infer<typeof saleRecordSchema>;
 
 const headerMapping: { [key: string]: keyof SaleRecord } = {
+  // Mappings from logs
+  "Fecha de anulada": "annulment_date",
+  "Nro. transaccion": "transaction_number", // Note: This is different from "Nro. transacción"
+  "Codigo autorizacion": "authorization_code",
+  "Emisor": "issuer_name",
+  "Nro. tarjeta": "card_number_masked",
+  "Sexo": "customer_gender",
+  "Fecha de nacimiento": "customer_birth_date",
+  "Codigo de Sucursal": "branch_code", // Ensure exact match from log
+  "Origen": "transaction_origin",
+  "Tipo": "transaction_type",
+  "Procesadora": "processor_name",
+  "Dispositivo": "device_type",
+  "Codigo Iata": "iata_code",
+  "Afinidad": "card_affinity",
+  "Nro. de resumen": "statement_number",
+  "Monto de comision": "commission_amount", // Ensure exact match from log
+  "IVA s/Comision": "vat_on_commission",
+  // "Retencion RENTA" is already mapped to income_tax_withholding, ensure it's the exact string from log
+  // "Retencion IVA" is already mapped to vat_withholding, ensure it's the exact string from log
+  "Codigo de cuenta de la entidad de deposito": "deposit_account_code",
+  "Nro. de cuenta del Banco": "bank_account_number",
+  "Porcentaje de comision al comercio": "merchant_commission_rate",
+  // "Fecha de credito del comercio" is already mapped to settlement_date, ensure it's the exact string from log
+  "Fecha de la promocion": "promotion_date",
+  "Caja": "cash_register_id",
+  "Servicio de Transacción": "transaction_service",
+  "Descripción del servicio": "service_description",
+  "Prestación": "service_code",
+  "Descripción de la prestación": "service_code_description",
+  "Datos Adicionales": "additional_data",
+  "Boleta Preautorización": "pre_authorization_slip",
+  // Existing mappings below:
   "Fecha de venta": "sale_date",
   "Nro. transacción": "transaction_number",
   "Nro Transacción": "transaction_number",
@@ -137,7 +205,7 @@ export async function POST(
       return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
     }
 
-    // storeId is already available from the outer scope
+    const { storeId } = params; // Directly get storeId from destructured params
     if (!storeId) {
       return NextResponse.json({ error: "Missing storeId from route parameters" }, { status: 400 });
     }
@@ -234,10 +302,28 @@ export async function POST(
       const validationResult = saleRecordSchema.safeParse(mappedRow);
 
       if (validationResult.success) {
+        const dataForDb = validationResult.data;
         salesToInsert.push({
-          ...validationResult.data,
+          // Fields that exist in salesTable schema
+          sale_date: dataForDb.sale_date,
+          transaction_number: dataForDb.transaction_number,
+          card_type: dataForDb.card_type,
+          card_brand: dataForDb.card_brand,
+          installments: dataForDb.installments,
+          payment_plan: dataForDb.payment_plan,
+          currency: dataForDb.currency,
+          gross_amount: dataForDb.gross_amount,
+          branch_code: dataForDb.branch_code,
+          transaction_status: dataForDb.transaction_status,
+          net_amount: dataForDb.net_amount,
+          commission_amount: dataForDb.commission_amount,
+          income_tax_withholding: dataForDb.income_tax_withholding,
+          vat_withholding: dataForDb.vat_withholding,
+          settlement_date: dataForDb.settlement_date,
+          promo_discount: dataForDb.promo_discount,
+          payment_method: dataForDb.payment_method,
           storeId: storeId, // Add storeId to the record
-          // Drizzle ORM typically handles createdAt/updatedAt automatically if configured in schema/db
+          // id, createdAt, updatedAt are typically handled by Drizzle/DB
         });
       } else {
         errors.push({
