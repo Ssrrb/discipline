@@ -34,6 +34,9 @@ import {
 } from "@/components/ui/card";
 
 const formSchema = z.object({
+  name: z
+    .string()
+    .min(3, { message: "Sales record name must be at least 3 characters." }),
   file: z
     .custom<FileList>(
       (val) => {
@@ -86,6 +89,7 @@ export const SalesForm: React.FC<SalesFormProps> = ({ storeId }) => {
   const form = useForm<SalesFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      name: "",
       // file: undefined, // Zod optional handles this
     },
   });
@@ -103,7 +107,6 @@ export const SalesForm: React.FC<SalesFormProps> = ({ storeId }) => {
 
   const onSubmit = async (values: SalesFormValues) => {
     if (!values.file || values.file.length === 0) {
-      // This case should ideally be caught by Zod validation
       toast.error("Please select a file.");
       return;
     }
@@ -111,104 +114,67 @@ export const SalesForm: React.FC<SalesFormProps> = ({ storeId }) => {
     const file = values.file[0];
     setLoading(true);
     setProgress(0);
-    setFileName(file.name); // Ensure filename is set on submit as well
+    setFileName(file.name);
+
+    const formData = new FormData();
+    formData.append("name", values.name.trim());
+    formData.append("file", file);
 
     try {
-      let parsedData: any[] = [];
-      const fileExtension = file.name.split(".").pop()?.toLowerCase();
+      await axios.post(`/api/stores/${storeId}/sales`, formData, {
+        headers: {
+          // Axios will set 'Content-Type': 'multipart/form-data' automatically
+          // when it detects a FormData object as the payload.
+        },
+        onUploadProgress: (progressEvent) => {
+          if (progressEvent.total) {
+            const percentCompleted = Math.round(
+              (progressEvent.loaded * 100) / progressEvent.total
+            );
+            setProgress(percentCompleted);
+          } else {
+            // Fallback for when total size is not available
+            // This provides some feedback but won't be an accurate percentage
+            // You might want to handle this differently, e.g., show an indeterminate loader
+            // or a simpler message like "Uploading..."
+            // For now, we'll increment progress slowly up to a point.
+            setProgress((prev) => (prev < 90 ? prev + 5 : 90));
+          }
+        },
+      });
 
-      setProgress(10); // Initial progress
-
-      if (fileExtension === "csv") {
-        parsedData = await new Promise((resolve, reject) => {
-          // Explicitly cast 'file' to 'any' to bypass the 'unique symbol' type error.
-          // This is a workaround for a complex TypeScript typing issue with PapaParse.
-          Papa.parse(file as any, {
-            header: true,
-            skipEmptyLines: true,
-            dynamicTyping: true,
-            complete: (result: Papa.ParseResult<any>) => {
-              // The 'errors' array in result.meta can be checked here for row-level errors if needed
-              if (result.errors && result.errors.length > 0) {
-                console.warn("Row-level parsing errors:", result.errors);
-                // Decide if these errors are critical enough to reject the promise
-                // For now, we'll proceed but log them.
-              }
-              setProgress(50); // Progress after parsing
-              resolve(result.data);
-            },
-            // Removed 'error' callback from config, will rely on Promise reject for critical errors.
-          });
-        });
-      } else if (fileExtension === "xlsx" || fileExtension === "xls") {
-        const arrayBuffer = await file.arrayBuffer();
-        const workbook = XLSX.read(arrayBuffer, { type: "buffer" });
-        const sheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[sheetName];
-        // Attempt to convert to JSON with headers
-        parsedData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-
-        if (parsedData.length > 0) {
-          const headers: string[] = (parsedData[0] as any[]).map(String); // Ensure headers are strings
-          parsedData = parsedData.slice(1).map((row: any[]) => {
-            let obj: any = {};
-            headers.forEach((header, index) => {
-              obj[header] = row[index];
-            });
-            return obj;
-          });
-        }
-        setProgress(50); // Progress after parsing
-      } else {
-        // This case should also be caught by Zod validation based on file type
-        toast.error("Unsupported file type. Please upload CSV or XLSX.");
-        setLoading(false);
-        setProgress(0);
-        return;
-      }
-
-      if (parsedData.length === 0) {
-        toast.error("The file is empty or could not be parsed correctly.");
-        setLoading(false);
-        setProgress(0);
-        return;
-      }
-
-      setProgress(75); // Progress before API call
-
-      // Example transformation based on memory (adjust to your actual needs)
-      const dataToSend = parsedData.map((item) => ({
-        ...item,
-        price:
-          item.price !== undefined && item.price !== null
-            ? String(item.price)
-            : undefined,
-        categoryId: item.categoryId === "" ? null : item.categoryId,
-        // Add other necessary transformations or validations here
-      }));
-
-      // Replace with your actual API endpoint
-      await axios.post(`/api/stores/${storeId}/sales/route`, dataToSend);
-
+      // If onUploadProgress doesn't reach 100% (e.g. if total is not available),
+      // ensure it's set to 100% on success.
       setProgress(100);
-      toast.success("File processed and data uploaded successfully!");
-      router.refresh();
-      form.reset();
-      setFileName(null);
-    } catch (error: any) {
-      setProgress(0);
-      if (error.response?.data?.error) {
-        toast.error(`API Error: ${error.response.data.error}`);
-      } else if (error.message) {
-        toast.error(`Processing Error: ${error.message}`);
-      } else {
-        toast.error("Something went wrong during file processing or upload.");
+      toast.success("File uploaded successfully! Backend processing started.");
+      router.refresh(); // Refresh to see changes if any are immediately reflected
+      // router.push(`/${storeId}/sales`); // Or navigate to a relevant page
+      form.reset(); // Reset the form fields
+      setFileName(null); // Clear the displayed file name
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ""; // Clear the actual file input element
       }
-      console.error("File processing error:", error);
+    } catch (error: any) {
+      setProgress(0); // Reset progress on error
+      if (error.response?.data?.error) {
+        toast.error(`Upload Error: ${error.response.data.error}`);
+      } else if (error.message) {
+        toast.error(`Upload Error: ${error.message}`);
+      } else {
+        toast.error("Something went wrong during file upload.");
+      }
+      console.error("File upload error:", error);
     } finally {
       setLoading(false);
-      // Keep progress at 100 if successful, otherwise reset or show error state
-      if (progress !== 100) setProgress(0);
+      // If an error occurred before completion, progress might not be 100.
+      // Resetting to 0 unless it was successful.
+      if (progress !== 100 && !loading) {
+        // Check !loading because setLoading(false) is in finally
+        // and we only want to reset if it wasn't a success.
+        // A more robust way would be a success flag.
+      }
+      // If successful, progress is already 100. If error, it's reset to 0.
+      // If still loading (which shouldn't happen here), keep current progress.
     }
   };
 
@@ -234,6 +200,26 @@ export const SalesForm: React.FC<SalesFormProps> = ({ storeId }) => {
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
               <FormField
                 control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Sales Record Name</FormLabel>
+                    <FormControl>
+                      <Input
+                        disabled={loading}
+                        placeholder="e.g., Q4 Campaign Sales, October Week 1"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      A descriptive name for this batch of sales data.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
                 name="file"
                 render={({ field }) => (
                   <FormItem>
@@ -256,7 +242,6 @@ export const SalesForm: React.FC<SalesFormProps> = ({ storeId }) => {
                           disabled={loading}
                           onChange={handleFileChange}
                           ref={fileInputRef}
-                          className="hidden" // Hide the actual file input
                         />
                         {fileName && !form.formState.errors.file && (
                           <span

@@ -121,56 +121,77 @@ const headerMapping: { [key: string]: keyof SaleRecord } = {
   "Medio de pago": "payment_method",
 };
 
-export async function POST(request: NextRequest, { params }: { params: { storeId: string } }) {
+type RouteParams = { storeId: string };
+
+export async function POST(
+  req: NextRequest,
+  context: { params: RouteParams | Promise<RouteParams> }
+) {
+  // Handle both direct params and Promise<params> for backward compatibility
+  const params = 'then' in context.params ? await context.params : context.params;
+  const { storeId } = params;
   try {
+    // CRITICAL CHANGE: Await the auth() call
     const { userId } = await auth();
     if (!userId) {
-      return new NextResponse("Unauthenticated", { status: 401 });
+      return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
     }
 
-    const storeId = params.storeId;
+    // storeId is already available from the outer scope
     if (!storeId) {
-      return new NextResponse("Store ID is required", { status: 400 });
+      return NextResponse.json({ error: "Missing storeId from route parameters" }, { status: 400 });
     }
-
-    // Verify user owns the store
+    
+    // Verify the store exists and belongs to the user
     const [store] = await db
-      .select({ id: storeTable.id, userId: storeTable.userId })
+      .select()
       .from(storeTable)
-      .where(and(eq(storeTable.id, storeId), eq(storeTable.userId, userId)));
+      .where(
+        and(
+          eq(storeTable.id, storeId),
+          eq(storeTable.userId, userId)
+        )
+      );
 
     if (!store) {
-      return new NextResponse("Forbidden: Store not found or you do not own this store", { status: 403 });
+      return NextResponse.json({ error: "Store not found or access denied" }, { status: 404 });
     }
 
-    const formData = await request.formData();
-    const file = formData.get("file") as File;
+    // Directly process FormData as the primary expected format
+    const formData = await req.formData();
+    const file = formData.get("file") as File | null;
+    // const formName = formData.get("name") as string | null; // If you also pass a 'name' field from the form
 
     if (!file) {
-      return new NextResponse("No file uploaded", { status: 400 });
+      return new NextResponse("No file uploaded in form data.", { status: 400 });
     }
 
     const fileBuffer = Buffer.from(await file.arrayBuffer());
     let rawData: any[] = [];
 
+    // Determine file type and parse accordingly
     if (file.name.endsWith(".csv") || file.type === "text/csv" || file.type === "application/csv") {
       const csvData = Papa.parse(fileBuffer.toString("utf-8"), {
         header: true,
         skipEmptyLines: true,
-        transformHeader: header => header.trim(), // Trim header spaces
+        transformHeader: header => header.trim(), // Trim whitespace from headers
       });
-      rawData = csvData.data.filter(row => Object.values(row as Record<string, any>).some(val => val !== null && val !== '')); // Filter out completely empty rows
+      // Filter out rows that are completely empty after parsing
+      rawData = csvData.data.filter(row => 
+        Object.values(row as Record<string, any>).some(val => val !== null && String(val).trim() !== '')
+      );
     } else if (file.name.endsWith(".xlsx") || file.type === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet") {
-      const workbook = XLSX.read(fileBuffer, { type: "buffer", cellDates: true }); // cellDates: true helps with date parsing
+      const workbook = XLSX.read(fileBuffer, { type: "buffer", cellDates: true });
       const sheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[sheetName];
-      rawData = XLSX.utils.sheet_to_json(worksheet, { raw: false, defval: null }); // raw: false for formatted strings, defval for empty cells
+      // For XLSX, sheet_to_json with defval:null handles empty cells gracefully
+      rawData = XLSX.utils.sheet_to_json(worksheet, { raw: false, defval: null }); 
     } else {
       return new NextResponse(`Unsupported file type: ${file.type || 'unknown'}. Please upload a CSV or XLSX file.`, { status: 400 });
     }
 
     if (rawData.length === 0) {
-        return NextResponse.json({ message: "File is empty or contains no data.", errors: [] }, { status: 400 });
+        return NextResponse.json({ message: "File is empty or contains no data after initial parsing.", errors: [] }, { status: 400 });
     }
 
     const salesToInsert: (typeof salesTable.$inferInsert)[] = [];
@@ -179,27 +200,31 @@ export async function POST(request: NextRequest, { params }: { params: { storeId
     for (let i = 0; i < rawData.length; i++) {
       const row = rawData[i];
       const mappedRow: any = {};
-      let hasNonNullValue = false;
+      let hasNonNullValueInRow = false;
 
+      // Map CSV/XLSX headers to schema keys
+      console.log(`[Row ${i+2}] Processing raw data:`, JSON.stringify(row));
       for (const rawHeaderKey in row) {
-        const trimmedHeader = rawHeaderKey.trim();
+        const trimmedHeader = String(rawHeaderKey).trim();
+        console.log(`[Row ${i+2}] Raw header: '${rawHeaderKey}', Trimmed: '${trimmedHeader}', Found in mapping: ${!!headerMapping[trimmedHeader]}`);
         if (headerMapping[trimmedHeader]) {
           const schemaKey = headerMapping[trimmedHeader];
-          mappedRow[schemaKey] = row[rawHeaderKey]; // Keep original value for Zod to preprocess
-          if (row[rawHeaderKey] !== null && row[rawHeaderKey] !== ""){
-            hasNonNullValue = true;
+          mappedRow[schemaKey] = row[rawHeaderKey];
+          // Check if the original value (after potential string conversion and trim) has content
+          if (row[rawHeaderKey] !== null && String(row[rawHeaderKey]).trim() !== ""){
+            hasNonNullValueInRow = true;
           }
         }
       }
       
-      // Skip row if it only contained null/empty string values after mapping (likely an empty line in CSV)
-      if (!hasNonNullValue && (file.name.endsWith(".csv") || file.type === "text/csv" || file.type === "application/csv")) {
-        // For XLSX, sheet_to_json with defval:null handles this better, so only apply this heuristic for CSV
-        const allValuesNullOrEmpty = Object.values(mappedRow).every(v => v === null || v === "");
-        if(allValuesNullOrEmpty) continue;
+      // Skip effectively empty rows, especially for CSVs where empty lines might parse as objects with null/empty string values
+      if (!hasNonNullValueInRow && (file.name.endsWith(".csv") || file.type === "text/csv" || file.type === "application/csv")) {
+        // Double check if all mapped values are null or empty strings
+        const allValuesEffectivelyEmpty = Object.values(mappedRow).every(v => v === null || String(v).trim() === "");
+        if(allValuesEffectivelyEmpty) continue;
       }
 
-      // Ensure all Zod schema keys are present, defaulting to undefined if not in mappedRow, so Zod can process them
+      // Ensure all Zod schema keys are present for validation, defaulting to undefined if not in mappedRow
       Object.keys(saleRecordSchema.shape).forEach(schemaKey => {
         if (!(schemaKey in mappedRow)) {
           mappedRow[schemaKey] = undefined; 
@@ -211,26 +236,28 @@ export async function POST(request: NextRequest, { params }: { params: { storeId
       if (validationResult.success) {
         salesToInsert.push({
           ...validationResult.data,
-          storeId: storeId,
-          // Drizzle handles createdAt/updatedAt
+          storeId: storeId, // Add storeId to the record
+          // Drizzle ORM typically handles createdAt/updatedAt automatically if configured in schema/db
         });
       } else {
         errors.push({
           row: i + 2, // Adding 2 for 1-based indexing + header row
           messages: validationResult.error.errors.map((e) => `${e.path.join(".")} - ${e.message}`),
-          originalData: row
+          originalData: row // Include original row data for easier debugging on client or logs
         });
       }
     }
 
+    console.log(`Finished processing all rows. errors.length: ${errors.length}, salesToInsert.length: ${salesToInsert.length}`);
     if (errors.length > 0) {
-      return NextResponse.json({ message: "Validation errors occurred during processing.", errors }, { status: 400 });
+      return NextResponse.json({ message: "Validation errors occurred during processing. Please check the file content.", errors }, { status: 400 });
     }
 
     if (salesToInsert.length === 0) {
-      return NextResponse.json({ message: "No valid data to insert. The file might be empty or all rows had errors after validation." }, { status: 400 });
+      return NextResponse.json({ message: "No valid data to insert. The file might be empty, all rows had errors, or all rows were filtered out as empty." }, { status: 400 });
     }
 
+    // Perform database insertion
     await db.insert(salesTable).values(salesToInsert);
 
     return NextResponse.json({ message: `Successfully imported ${salesToInsert.length} sales records.` }, { status: 201 });
@@ -238,10 +265,14 @@ export async function POST(request: NextRequest, { params }: { params: { storeId
   } catch (error) {
     console.error("[SALES_UPLOAD_POST_ERROR]", error);
     if (error instanceof z.ZodError) {
-      // This case should ideally be caught by row-level safeParse, but as a fallback
-      return new NextResponse("A top-level validation error occurred: " + error.flatten().formErrors.join(', '), { status: 400 });
+      // This might catch Zod errors if any manual parsing outside safeParse throws them, though unlikely with current structure.
+      return new NextResponse("A top-level Zod validation error occurred: " + error.flatten().formErrors.join(', '), { status: 400 });
     }
-    // Handle other potential errors, e.g., file read errors, database errors
-    return new NextResponse("Internal Server Error while processing the file.", { status: 500 });
+    // Handle specific error for body already used, often by middleware or incorrect request handling
+    if (error instanceof Error && error.message.includes("Request body is already used")) {
+        return new NextResponse("Internal Server Error: Failed to process request data. The request body might have been consumed by middleware.", { status: 500 });
+    }
+    // Generic internal server error for other cases
+    return new NextResponse("Internal Server Error while processing sales upload.", { status: 500 });
   }
 }
