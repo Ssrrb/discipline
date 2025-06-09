@@ -33,7 +33,7 @@ const ProductsPage = async ({
     id: item.id,
     name: item.name,
     description: item.description || "",
-    price: `$${parseFloat(item.price || "0").toFixed(2)}`,
+    price: `${parseFloat(item.price || "0").toFixed(0)}₲`,
     stock: item.stock || 0,
     category: item.category || "No category",
     createdAt: item.createdAt ? format(item.createdAt, "MMMM do, yyyy") : "",

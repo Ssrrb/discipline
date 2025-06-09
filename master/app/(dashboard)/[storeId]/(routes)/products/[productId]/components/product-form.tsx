@@ -253,7 +253,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                     <FormLabel>Category</FormLabel>
                     <Select
                       disabled={loading}
-                      onValueChange={(value) => {
+                      onValueChange={(value: string) => {
                         field.onChange(value === "no-category" ? null : value);
                       }}
                       value={field.value || "no-category"}
