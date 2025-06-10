@@ -4,6 +4,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { isValidPhoneNumber } from "react-phone-number-input";
 import { z } from "zod";
+import { useState } from "react";
+import { useParams } from "next/navigation";
+import axios from "axios";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -51,11 +54,11 @@ const salesDistributionData = [
 ];
 
 const salesChartConfig = {
-  sales: { label: "Sales ($)" },
-  electronics: { label: "Electronics", color: "hsl(var(--chart-1))" },
-  apparel: { label: "Apparel", color: "hsl(var(--chart-2))" },
-  homegoods: { label: "Home Goods", color: "hsl(var(--chart-3))" },
-  books: { label: "Books", color: "hsl(var(--chart-4))" },
+  sales: { label: "Ventas ($)" },
+  electronics: { label: "Vestido", color: "hsl(var(--chart-1))" },
+  apparel: { label: "Remera", color: "hsl(var(--chart-2))" },
+  homegoods: { label: "Pantalon", color: "hsl(var(--chart-3))" },
+  books: { label: "Blusa", color: "hsl(var(--chart-4))" },
 } satisfies ChartConfig;
 
 const userActivityData = [
@@ -69,13 +72,16 @@ const userActivityData = [
 ];
 
 const activityChartConfig = {
-  count: { label: "User Count" },
-  newusers: { label: "New Users", color: "hsl(var(--chart-5))" },
-  returningusers: { label: "Returning Users", color: "hsl(var(--chart-1))" },
-  inactiveusers: { label: "Inactive Users", color: "hsl(var(--chart-3))" },
+  count: { label: "Conteo de Usuarios" },
+  newusers: { label: "Nuevos Usuarios", color: "hsl(var(--chart-5))" },
+  returningusers: { label: "Usuarios Regresivos", color: "hsl(var(--chart-1))" },
+  inactiveusers: { label: "Usuarios Inactivos", color: "hsl(var(--chart-3))" },
 } satisfies ChartConfig;
 
 const DashboardPage = () => {
+  const params = useParams<{ storeId: string }>();
+  const [loading, setLoading] = useState(false);
+
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
@@ -83,30 +89,29 @@ const DashboardPage = () => {
     },
   });
 
-  function onSubmit(data: z.infer<typeof FormSchema>) {
-    toast.success("Phone Number Submitted:", {
-      description: (
-        <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
-          <code className="text-white">{JSON.stringify(data, null, 2)}</code>
-        </pre>
-      ),
-      action: {
-        label: "Undo",
-        onClick: () => console.log("Undo action triggered"),
-      },
-    });
-    // Here you would typically send the data.phone to your backend
-    console.log("Paraguayan Phone Number:", data.phone);
+  async function onSubmit(data: z.infer<typeof FormSchema>) {
+    try {
+      setLoading(true);
+      await axios.post(`/api/stores/${params.storeId}/dashboard-num`, {
+        phone: data.phone,
+      });
+      toast.success("Phone number submitted successfully!");
+    } catch (error) {
+      toast.error("Failed to submit phone number. Please try again.");
+      console.error("Submission failed", error);
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-8 flex flex-col items-center">
       <header className="my-8 text-center">
         <h1 className="text-4xl font-bold tracking-tight lg:text-5xl">
-          Welcome to Your Business Hub
+          Bienvenido a su hub de negocio
         </h1>
         <p className="mt-3 text-lg text-muted-foreground">
-          Manage your store, products, and analyze performance all in one place.
+          Gestione su tienda, productos y analice el desempeño en un solo lugar.
         </p>
       </header>
 
@@ -114,8 +119,7 @@ const DashboardPage = () => {
         <CardHeader>
           <CardTitle>Get Started</CardTitle>
           <CardDescription>
-            Enter your Paraguayan phone number to link your store or get
-            started.
+            Ingrese su numero de telefono para vincular su tienda o iniciar. ej: +595 981123456
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -143,8 +147,13 @@ const DashboardPage = () => {
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full" size="lg">
-                Submit Phone Number
+              <Button
+                type="submit"
+                className="w-full"
+                size="lg"
+                disabled={loading}
+              >
+                {loading ? "Submitting..." : "Submit Phone Number"}
               </Button>
             </form>
           </Form>
@@ -154,9 +163,9 @@ const DashboardPage = () => {
       <div className="w-full max-w-5xl grid gap-6 md:grid-cols-2">
         <Card className="shadow-md">
           <CardHeader>
-            <CardTitle>Sample Sales Distribution</CardTitle>
+            <CardTitle>Analisis de Ventas</CardTitle>
             <CardDescription>
-              Illustrative breakdown of sales by category.
+              Analisis de ventas por categoria.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -198,8 +207,8 @@ const DashboardPage = () => {
 
         <Card className="shadow-md">
           <CardHeader>
-            <CardTitle>Sample User Activity</CardTitle>
-            <CardDescription>Overview of user engagement.</CardDescription>
+            <CardTitle>Mayor cantidad en inventario</CardTitle>
+            <CardDescription>Resumen de la actividad del inventario.</CardDescription>
           </CardHeader>
           <CardContent>
             <ChartContainer
